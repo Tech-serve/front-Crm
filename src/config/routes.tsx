@@ -16,7 +16,6 @@ export const routes: AppRoute[] = [
   { path: "/", element: <Dashboard />, label: "Dashboard", inMenu: true, roles: ["hr", "buyer", "head"] },
   { path: "/hr/interviews", element: <InterviewsPage />, label: "Интервью", inMenu: true, roles: ["hr", "head"] },
   { path: "/buyer/generators", element: <GeneratorsPage />, label: "Генераторы ссылок", inMenu: true, roles: ["buyer", "head"] },
-  // позже: /admin ...
 ];
 
 export function menuForRole(role: Role) {

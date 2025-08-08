@@ -4,18 +4,16 @@ import type { Candidate, InterviewStatus } from "src/types/domain";
 import type { StatusOption } from "src/config/statusConfig";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
 
-/* --------- props --------------------------------------------- */
 type Props = {
-  row:       Candidate;
-  value?:    InterviewStatus;           // если DataGrid передаёт вычисленное поле
-  options:   StatusOption[];
+  row: Candidate;
+  value?: InterviewStatus;
+  options: StatusOption[];
   onChange?: (next: InterviewStatus, row: Candidate) => void;
-  widthPx?:  number;                    // ширина селекта, по-умолчанию 160
+  widthPx?: number;
 };
 
 const STATUS_WIDTH_DEFAULT = 160;
 
-/* --------- ui helpers ---------------------------------------- */
 const CompactSelect = styled(Select)(({ theme }) => ({
   minWidth: 0,
   "& .MuiSelect-select": {
@@ -45,7 +43,6 @@ function Dot({ color }: { color: string }) {
   );
 }
 
-/* --------- component ---------------------------------------- */
 export default function StatusCell({
   row,
   value,
@@ -53,13 +50,9 @@ export default function StatusCell({
   onChange,
   widthPx,
 }: Props) {
-  /* статус берём либо из value, либо из «свежего» интервью */
   const current = useMemo(() => {
-    const currentValue =
-      value ??
-      row.interviews?.[0]?.status ??        // последний интервью-запись
-      "not_held";
-    return options.find((o) => o.value === currentValue) ?? options[0];
+    const v = value ?? row.interviews?.[0]?.status ?? "not_held";
+    return options.find((o) => o.value === v) ?? options[0];
   }, [options, value, row.interviews]);
 
   const [patchCandidate] = usePatchCandidateMutation();
@@ -70,21 +63,29 @@ export default function StatusCell({
       return;
     }
 
-    /* обновляем статус самого первого интервью в массиве */
-    const updatedInterviews =
-      row.interviews && row.interviews.length
-        ? [{ ...row.interviews[0], status: next }, ...row.interviews.slice(1)]
-        : [{ status: next, scheduledAt: new Date().toISOString() } as any];
+    const list = row.interviews?.length ? [...row.interviews] : [];
+    const nowIso = new Date().toISOString();
+
+    if (list.length === 0) {
+      list.unshift({
+        status: next,
+        scheduledAt:
+          next === "success" || next === "declined" ? nowIso : undefined,
+      } as any);
+    } else {
+      const head = { ...list[0], status: next };
+      if (next === "success" || next === "declined") head.scheduledAt = nowIso;
+      list[0] = head;
+    }
 
     await patchCandidate({
       id: row._id,
-      body: { interviews: updatedInterviews },
+      body: { interviews: list },
     }).unwrap();
   };
 
   const width = widthPx ?? STATUS_WIDTH_DEFAULT;
 
-  /* --------- render ----------------------------------------- */
   return (
     <Box sx={{ display: "inline-flex" }}>
       <CompactSelect
@@ -96,9 +97,7 @@ export default function StatusCell({
           bgcolor: current.bg,
           color: current.fg,
           "& .MuiSvgIcon-root": { color: current.fg },
-          "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(0,0,0,0.12)",
-          },
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(0,0,0,0.12)" },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "rgba(0,0,0,0.18)",
             borderWidth: 1,
@@ -115,10 +114,7 @@ export default function StatusCell({
       >
         {options.map((o) => (
           <MenuItem key={o.value} value={o.value}>
-            <Box
-              component="span"
-              sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}
-            >
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
               <Dot color={o.dot} />
               {o.label}
             </Box>

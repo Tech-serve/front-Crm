@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-
 import {
   useGetCandidatesQuery,
   usePatchCandidateMutation,
@@ -10,28 +9,31 @@ import candidatesColumns from "src/tables/candidatesTable";
 import type { Candidate } from "src/types/domain";
 
 export default function CandidatesPage() {
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-  } = useGetCandidatesQuery({ page: 1, pageSize: 20 });
+  const { data, isLoading, isError, error } = useGetCandidatesQuery({
+    page: 1,
+    pageSize: 20,
+  });
 
   const [patchCandidate] = usePatchCandidateMutation();
 
-  // подготавливаем строки ----------------------------------------------------
   const rows = useMemo(
     () =>
       (data?.items ?? []).map((c) => {
-        const last = c.interviews?.[0]; // берём «свежее» интервью, если есть
+        const iv = c.interviews?.[0];
+        const showDate =
+          iv &&
+          (iv.status === "success" || iv.status === "declined") &&
+          iv.scheduledAt;
         return {
           ...c,
-          scheduledAtText: last ? new Date(last.scheduledAt).toLocaleString() : "—",
-          status:          last?.status   ?? "—",
-          meetLink:        last?.meetLink ?? undefined,
+          scheduledAtText: showDate
+            ? new Date(iv.scheduledAt).toLocaleDateString()
+            : "—",
+          status: iv?.status ?? "—",
+          meetLink: iv?.meetLink,
         };
       }),
-    [data],
+    [data]
   );
 
   return (
@@ -55,7 +57,7 @@ export default function CandidatesPage() {
           disableRowSelectionOnClick
           processRowUpdate={async (newRow) => {
             await patchCandidate({
-              id:   (newRow as Candidate)._id,
+              id: (newRow as Candidate)._id,
               body: { notes: (newRow as Candidate).notes },
             }).unwrap();
             return newRow;

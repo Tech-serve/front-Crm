@@ -3,15 +3,16 @@ import { Box, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import {
   useGetCandidatesQuery,
-  usePatchCandidateMutation,
+  usePatchCandidateMutation
 } from "src/api/candidatesApi";
 import candidatesColumns from "src/tables/candidatesTable";
+import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import type { Candidate } from "src/types/domain";
 
 export default function CandidatesPage() {
   const { data, isLoading, isError, error } = useGetCandidatesQuery({
     page: 1,
-    pageSize: 20,
+    pageSize: 20
   });
 
   const [patchCandidate] = usePatchCandidateMutation();
@@ -20,17 +21,24 @@ export default function CandidatesPage() {
     () =>
       (data?.items ?? []).map((c) => {
         const iv = c.interviews?.[0];
-        const showDate =
+        const show =
           iv &&
           (iv.status === "success" || iv.status === "declined") &&
           iv.scheduledAt;
+
+        const statusCode = iv?.status ?? "—";
+        const statusLabel =
+          HR_STATUS_OPTIONS.find((o) => o.value === statusCode)?.label ??
+          statusCode;
+
         return {
           ...c,
-          scheduledAtText: showDate
+          scheduledAtText: show
             ? new Date(iv.scheduledAt).toLocaleDateString()
             : "—",
-          status: iv?.status ?? "—",
-          meetLink: iv?.meetLink,
+          statusCode,
+          statusLabel,
+          meetLink: iv?.meetLink
         };
       }),
     [data]
@@ -58,7 +66,7 @@ export default function CandidatesPage() {
           processRowUpdate={async (newRow) => {
             await patchCandidate({
               id: (newRow as Candidate)._id,
-              body: { notes: (newRow as Candidate).notes },
+              body: { notes: (newRow as Candidate).notes }
             }).unwrap();
             return newRow;
           }}

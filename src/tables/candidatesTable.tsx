@@ -17,7 +17,7 @@ const LinkCell = ({ url }: { url?: string }) =>
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
-        fontWeight: 500,
+        fontWeight: 500
       }}
     >
       {url}
@@ -31,17 +31,17 @@ const candidatesColumns: GridColDef[] = [
   { field: "email", headerName: "Email", width: 200 },
   { field: "scheduledAtText", headerName: "Когда", width: 220 },
   {
-    field: "status",
+    field: "statusLabel",
     headerName: "Статус",
     width: 200,
     sortable: false,
     renderCell: (p) => (
       <StatusCell
         row={p.row as Candidate}
-        value={p.value as InterviewStatus}
+        value={p.row.statusCode as InterviewStatus}
         options={HR_STATUS_OPTIONS}
       />
-    ),
+    )
   },
   {
     field: "department",
@@ -50,16 +50,22 @@ const candidatesColumns: GridColDef[] = [
     sortable: false,
     renderCell: (p) => (
       <DepartmentCell row={p.row as Candidate} value={p.value as any} />
-    ),
+    )
   },
   {
     field: "meetLink",
     headerName: "Meet",
     width: 280,
     sortable: false,
-    renderCell: (p) => <LinkCell url={p.value as string | undefined} />,
+    renderCell: (p) => <LinkCell url={p.value as string | undefined} />
   },
-  { field: "notes", headerName: "Заметки", flex: 1, minWidth: 200, editable: true },
+  {
+    field: "notes",
+    headerName: "Заметки",
+    flex: 1,
+    minWidth: 200,
+    editable: true
+  }
 ];
 
 export default candidatesColumns;

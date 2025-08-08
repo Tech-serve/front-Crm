@@ -1,24 +1,22 @@
 import { baseApi } from "./baseApi";
-import type { Candidate, Interview, InterviewStatus, Paginated } from "src/types/domain";
-
-/* ---------- типы ---------- */
+import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
 type CreateCandidateBody = {
   fullName: string;
   email: string;
   notes?: string;
+  department?: DepartmentValue;
 };
 
 type UpdateCandidateBody = {
-  status?:  InterviewStatus;   // 👈 добавили
-  meetLink?: string;           // если решите менять ссылку
-  notes?:   string;
+  notes?: string;
+  status?: Candidate["status"];
+  meetLink?: string;
+  department?: DepartmentValue;
   interviews?: Interview[];
 };
 
 type CandidateWithInterviews = Candidate & { interviews?: Interview[] };
-
-/* ---------- endpoints ---------- */
 
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -31,25 +29,33 @@ export const candidatesApi = baseApi.injectEndpoints({
       providesTags: (res) =>
         res?.items
           ? [
-              ...res.items.map((c) => ({ type:"Candidates" as const, id:c._id })),
-              { type:"Candidates" as const, id:"LIST" },
+              ...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })),
+              { type: "Candidates" as const, id: "LIST" },
             ]
-          : [{ type:"Candidates" as const, id:"LIST" }],
+          : [{ type: "Candidates" as const, id: "LIST" }],
     }),
 
     createCandidate: build.mutation<Candidate, CreateCandidateBody>({
-      query: (body) => ({ url:"/candidates", method:"POST", body }),
-      invalidatesTags: [{ type:"Candidates", id:"LIST" }],
+      query: (body) => ({
+        url: "/candidates",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Candidates", id: "LIST" }],
     }),
 
     patchCandidate: build.mutation<
       Candidate,
-      { id:string; body: UpdateCandidateBody }
+      { id: string; body: UpdateCandidateBody }
     >({
-      query: ({ id, body }) => ({ url:`/candidates/${id}`, method:"PATCH", body }),
-      invalidatesTags: (_r,_e,{ id }) => [
-        { type:"Candidates", id },
-        { type:"Candidates", id:"LIST" },
+      query: ({ id, body }) => ({
+        url: `/candidates/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: "Candidates", id },
+        { type: "Candidates", id: "LIST" },
       ],
     }),
   }),

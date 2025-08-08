@@ -14,25 +14,32 @@ export type InterviewStatus =
   | "canceled";
 
 export interface Interview {
-  _id:              string;
-  scheduledAt:      string;
-  durationMinutes:  number;
-  participants:     string[];
-  status:           InterviewStatus;
-  source:           "jira" | "crm";
-  meetLink?:        string;
-  notes?:           string;
-  createdAt:        string;
-  updatedAt:        string;
+  _id?: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  participants: string[];
+  status: InterviewStatus;
+  source: "jira" | "crm";
+  meetLink?: string;
+  notes?: string;
 }
+
+export type DepartmentValue =
+  | "Геймблинг"
+  | "Свипы"
+  | "Сёрч"
+  | "Дизайнеры"
+  | "Техи"
+  | "Админ персонал";
 
 export interface Candidate {
   _id: string;
   fullName: string;
   email: string;
-  status?:   InterviewStatus;
+  notes?: string;
+  status?: InterviewStatus;
   meetLink?: string;
-  notes?:    string;
+  department?: DepartmentValue;
   interviews?: Interview[];
 }
 

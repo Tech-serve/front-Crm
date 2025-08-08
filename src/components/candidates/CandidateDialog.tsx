@@ -1,40 +1,64 @@
-import { useState, forwardRef, type ReactElement, type Ref } from "react";
+import { useState, forwardRef, type Ref, type ReactElement } from "react"
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Slide, Box
-} from "@mui/material";
-import { useCreateCandidateMutation } from "src/api/candidatesApi";
-import type { SlideProps } from "@mui/material/Slide";
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Slide,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
+} from "@mui/material"
+import type { SlideProps } from "@mui/material/Slide"
+import { HR_STATUS_OPTIONS } from "src/config/statusConfig"
+import { DEPARTMENTS } from "src/config/departmentConfig"
+import { useCreateCandidateMutation } from "src/api/candidatesApi"
 
 const Transition = forwardRef(function Transition(
   props: SlideProps & { children: ReactElement },
   ref: Ref<unknown>
 ) {
-  return <Slide direction="left" ref={ref} {...props} />;
-});
+  return <Slide direction="left" ref={ref} {...props} />
+})
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
+const Dot = ({ color }: { color: string }) => (
+  <span
+    style={{
+      display: "inline-block",
+      width: 8,
+      height: 8,
+      borderRadius: "50%",
+      background: color,
+      marginRight: 8
+    }}
+  />
+)
+
+type Props = { open: boolean; onClose: () => void }
 
 export default function CandidateDialog({ open, onClose }: Props) {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [status, setStatus] = useState("not_held")
+  const [department, setDepartment] = useState(DEPARTMENTS[0].value)
+  const [notes, setNotes] = useState("")
 
-  const [createCandidate, { isLoading }] = useCreateCandidateMutation();
-
-  const canSubmit = fullName && email;
+  const [createCandidate, { isLoading }] = useCreateCandidateMutation()
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
-    await createCandidate({ fullName, email, notes });
-    setFullName("");
-    setEmail("");
-    setNotes("");
-    onClose();
-  };
+    if (!fullName || !email) return
+    await createCandidate({ fullName, email, status, department, notes })
+    setFullName("")
+    setEmail("")
+    setStatus("not_held")
+    setDepartment(DEPARTMENTS[0].value)
+    setNotes("")
+    onClose()
+  }
 
   return (
     <Dialog
@@ -58,6 +82,41 @@ export default function CandidateDialog({ open, onClose }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             type="email"
           />
+
+          <FormControl>
+            <InputLabel id="status-label">Статус</InputLabel>
+            <Select
+              labelId="status-label"
+              value={status}
+              label="Статус"
+              onChange={(e) => setStatus(e.target.value as string)}
+            >
+              {HR_STATUS_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  <Dot color={o.dot} />
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl>
+            <InputLabel id="dept-label">Отдел</InputLabel>
+            <Select
+              labelId="dept-label"
+              value={department}
+              label="Отдел"
+              onChange={(e) => setDepartment(e.target.value as any)}
+            >
+              {DEPARTMENTS.map((d) => (
+                <MenuItem key={d.value} value={d.value}>
+                  <Dot color={d.dot} />
+                  {d.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <TextField
             label="Заметки"
             value={notes}
@@ -69,10 +128,14 @@ export default function CandidateDialog({ open, onClose }: Props) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
-        <Button onClick={handleSubmit} disabled={!canSubmit || isLoading} variant="contained">
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading || !fullName || !email}
+          variant="contained"
+        >
           Сохранить
         </Button>
       </DialogActions>
     </Dialog>
-  );
+  )
 }

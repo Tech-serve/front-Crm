@@ -2,11 +2,12 @@ import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
 type CreateCandidateBody = {
-  fullName: string;
-  email: string;
-  notes?: string;
-  department?: DepartmentValue;
-};
+  fullName: string
+  email: string
+  status?: string
+  department?: string
+  notes?: string
+}
 
 type UpdateCandidateBody = {
   notes?: string;

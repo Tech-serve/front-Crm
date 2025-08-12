@@ -3,6 +3,7 @@ import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import type { Candidate, InterviewStatus } from "src/types/domain";
 import StatusCell from "src/tables/cells/StatusCell";
 import DepartmentCell from "./cells/DepartmentCell";
+import WhenCell from "src/tables/cells/WhenCell";
 
 const LinkCell = ({ url }: { url?: string }) =>
   url ? (
@@ -29,7 +30,13 @@ const LinkCell = ({ url }: { url?: string }) =>
 const candidatesColumns: GridColDef[] = [
   { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160 },
   { field: "email", headerName: "Email", width: 200 },
-  { field: "scheduledAtText", headerName: "Когда", width: 220 },
+  {
+    field: "scheduledAtText",
+    headerName: "Когда",
+    width: 220,
+    sortable: false,
+    renderCell: (p) => <WhenCell row={p.row as Candidate} />,
+  },
   {
     field: "statusLabel",
     headerName: "Статус",

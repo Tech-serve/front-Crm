@@ -41,6 +41,14 @@ export interface Candidate {
   meetLink?: string;
   department?: DepartmentValue;
   interviews?: Interview[];
+
+  polygraphAt?: string; 
+  acceptedAt?: string;  
+  declinedAt?: string;  
+  canceledAt?: string; 
+  polygraphAddress?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Paginated<T> {

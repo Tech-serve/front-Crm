@@ -15,6 +15,11 @@ type UpdateCandidateBody = {
   meetLink?: string;
   department?: DepartmentValue;
   interviews?: Interview[];
+  polygraphAt?: string | null;
+  acceptedAt?: string | null;
+  declinedAt?: string | null;
+  canceledAt?: string | null;
+  polygraphAddress?: string | null;
 };
 
 type CandidateWithInterviews = Candidate & { interviews?: Interview[] };

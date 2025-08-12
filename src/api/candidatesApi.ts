@@ -1,14 +1,8 @@
+// src/api/candidatesApi.ts
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
-type CreateCandidateBody = {
-  fullName: string
-  email: string
-  status?: string
-  department?: string
-  notes?: string
-}
-
+type CreateCandidateBody = { fullName: string; email: string; status?: string; department?: string; notes?: string };
 type UpdateCandidateBody = {
   notes?: string;
   status?: Candidate["status"];
@@ -19,50 +13,42 @@ type UpdateCandidateBody = {
   acceptedAt?: string | null;
   declinedAt?: string | null;
   canceledAt?: string | null;
+  fullName?: string;
+  email?: string;
   polygraphAddress?: string | null;
 };
-
 type CandidateWithInterviews = Candidate & { interviews?: Interview[] };
+type MetricsResp = {
+  current: { not_held: number; reserve: number; success: number; declined: number; canceled: number };
+  monthly: { month: string; polygraph: number; accepted: number; declined: number; canceled: number }[];
+  firstTouches: { month: string; created: number }[];
+};
 
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getCandidates: build.query<
-      Paginated<CandidateWithInterviews>,
-      { page?: number; pageSize?: number }
-    >({
-      query: ({ page = 1, pageSize = 20 } = {}) =>
-        `/candidates?page=${page}&pageSize=${pageSize}`,
+    getCandidates: build.query<Paginated<CandidateWithInterviews>, { page?: number; pageSize?: number }>({
+      query: ({ page = 1, pageSize = 20 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
       providesTags: (res) =>
         res?.items
-          ? [
-              ...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })),
-              { type: "Candidates" as const, id: "LIST" },
-            ]
+          ? [...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })), { type: "Candidates" as const, id: "LIST" }]
           : [{ type: "Candidates" as const, id: "LIST" }],
     }),
-
     createCandidate: build.mutation<Candidate, CreateCandidateBody>({
-      query: (body) => ({
-        url: "/candidates",
-        method: "POST",
-        body,
-      }),
+      query: (body) => ({ url: "/candidates", method: "POST", body }),
       invalidatesTags: [{ type: "Candidates", id: "LIST" }],
     }),
-
-    patchCandidate: build.mutation<
-      Candidate,
-      { id: string; body: UpdateCandidateBody }
-    >({
-      query: ({ id, body }) => ({
-        url: `/candidates/${id}`,
-        method: "PATCH",
-        body,
-      }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: "Candidates", id },
-        { type: "Candidates", id: "LIST" },
-      ],
+    patchCandidate: build.mutation<Candidate, { id: string; body: UpdateCandidateBody }>({
+      query: ({ id, body }) => ({ url: `/candidates/${id}`, method: "PATCH", body }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }, { type: "Candidates", id: "LIST" }],
+    }),
+    getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({
+      query: (q) => {
+        const params = new URLSearchParams();
+        if (q?.from) params.set("from", q.from);
+        if (q?.to) params.set("to", q.to);
+        const qs = params.toString();
+        return `/candidates/metrics${qs ? `?${qs}` : ""}`;
+      },
     }),
   }),
   overrideExisting: false,
@@ -72,4 +58,5 @@ export const {
   useGetCandidatesQuery,
   useCreateCandidateMutation,
   usePatchCandidateMutation,
+  useGetCandidateMetricsQuery,
 } = candidatesApi;

@@ -63,11 +63,18 @@ export default function CandidatesPage() {
           getRowId={(r) => (r as Candidate)._id}
           loading={isLoading}
           disableRowSelectionOnClick
-          processRowUpdate={async (newRow) => {
-            await patchCandidate({
-              id: (newRow as Candidate)._id,
-              body: { notes: (newRow as Candidate).notes }
-            }).unwrap();
+          processRowUpdate={async (newRow, oldRow) => {
+            const n = newRow as Candidate;
+            const o = oldRow as Candidate;
+
+            const body: any = {};
+            if (n.fullName !== o.fullName) body.fullName = n.fullName?.trim();
+            if (n.email !== o.email)       body.email    = n.email?.trim();
+            if (n.notes !== o.notes)       body.notes    = n.notes;
+
+            if (Object.keys(body).length > 0) {
+              await patchCandidate({ id: n._id, body }).unwrap();
+            }
             return newRow;
           }}
           onProcessRowUpdateError={(e) => console.error(e)}

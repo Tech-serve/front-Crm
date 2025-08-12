@@ -4,11 +4,11 @@ import PrivateLayout from "../layouts/PrivateLayout";
 import PublicLayout  from "../layouts/PublicLayout";
 
 import LoginPage      from "src/common/LoginPage";
-import Dashboard      from "src/common/Dashboard";
 import GeneratorsPage from "src/common/GeneratorsPage";
 import CandidatesPage from "src/pages/CandidatesPage";
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
+import Dashboard from "src/pages/Dashboard";
 
 export function AppRoutes() {
   return (

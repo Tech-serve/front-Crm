@@ -58,31 +58,43 @@ export default function StatusCell({
   const [patchCandidate] = usePatchCandidateMutation();
 
   const handleChange = async (next: InterviewStatus) => {
-    if (onChange) {
-      onChange(next, row);
-      return;
-    }
+  if (onChange) {
+    onChange(next, row);
+    return;
+  }
 
-    const list = row.interviews?.length ? [...row.interviews] : [];
-    const nowIso = new Date().toISOString();
+  const list = row.interviews?.length ? [...row.interviews] : [];
+  const nowIso = new Date().toISOString();
 
-    if (list.length === 0) {
-      list.unshift({
-        status: next,
-        scheduledAt:
-          next === "success" || next === "declined" ? nowIso : undefined,
-      } as any);
-    } else {
-      const head = { ...list[0], status: next };
-      if (next === "success" || next === "declined") head.scheduledAt = nowIso;
-      list[0] = head;
-    }
+  if (list.length === 0) {
+    list.unshift({
+      status: next,
+      scheduledAt: next === "success" || next === "declined" ? nowIso : undefined,
+    } as any);
+  } else {
+    const head = { ...list[0], status: next };
+    if (next === "success" || next === "declined") head.scheduledAt = nowIso;
+    list[0] = head;
+  }
 
-    await patchCandidate({
-      id: row._id,
-      body: { interviews: list },
-    }).unwrap();
+  const map: Record<InterviewStatus, keyof Candidate | null> = {
+    not_held: null,
+    reserve:  null,         
+    success:  "acceptedAt",
+    declined: "declinedAt",
+    canceled: "canceledAt",
   };
+
+  const body: any = { interviews: list };
+
+  // если статус один из конечных — ставим текущую дату как стартовое значение для пикера
+  const field = map[next];
+  if (field) {
+    body[field] = nowIso; // теперь WhenCell сразу увидит дату и покажет её
+  }
+
+  await patchCandidate({ id: row._id, body }).unwrap();
+};
 
   const width = widthPx ?? STATUS_WIDTH_DEFAULT;
 

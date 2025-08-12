@@ -28,8 +28,18 @@ const LinkCell = ({ url }: { url?: string }) =>
   );
 
 const candidatesColumns: GridColDef[] = [
-  { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160 },
-  { field: "email", headerName: "Email", width: 200 },
+  { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160, editable: true }, // ← добавил editable
+  {
+    field: "email",
+    headerName: "Email",
+    width: 200,
+    editable: true, // ← добавил editable
+    preProcessEditCellProps: (params) => {
+      const v = String(params.props.value ?? "").trim();
+      const error = v.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      return { ...params.props, value: v, error };
+    },
+  },
   {
     field: "scheduledAtText",
     headerName: "Когда",

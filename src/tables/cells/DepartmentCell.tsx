@@ -12,15 +12,22 @@ type Props = {
 
 const WIDTH = 170;
 
-const CompactSelect = styled(Select)({
+const CompactSelect = styled(Select)(({ theme }) => ({
   "& .MuiSelect-select": {
     padding: "6px 10px",
     minHeight: 32,
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",       
+    overflow: "hidden",         
+    textOverflow: "ellipsis",  
   },
-});
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderRadius: theme.shape.borderRadius,
+  },
+}));
 
 const Dot = ({ color }: { color: string }) => (
   <span

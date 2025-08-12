@@ -65,10 +65,29 @@ export default function CandidateDialog({ open, onClose }: Props) {
       open={open}
       TransitionComponent={Transition}
       onClose={onClose}
-      PaperProps={{ sx: { width: 480, ml: "auto", height: "100vh", borderRadius: 0 } }}
+      keepMounted
+      sx={{
+        "& .MuiDialog-container": {
+          justifyContent: "flex-end",
+          alignItems: "stretch",
+        },
+      }}
+      PaperProps={{
+        sx: {
+          width: 480,
+          maxWidth: "none",
+          height: "100vh",
+          maxHeight: "100vh",     // переopпределяет calc(100% - 64px)
+          m: 0,                   // без внешних отступов
+          borderRadius: 0,
+          boxShadow: (t) => t.shadows[8],
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
     >
       <DialogTitle>Добавить кандидата</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ flex: 1, overflowY: "auto" }}>
         <Box display="grid" gap={2}>
           <TextField
             label="Полное имя"

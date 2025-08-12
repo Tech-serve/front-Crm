@@ -1,4 +1,3 @@
-import { Tooltip } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";
@@ -6,7 +5,6 @@ import type { ReactNode } from "react";
 import AppHeader from "src/components/AppHeader";
 import AddCandidateButton from "src/components/candidates/AddCandidateButton";
 import SideNav, { DRAWER_WIDTH } from "src/components/SideNav";
-
 
 export default function PrivateLayout({ children }: { children: ReactNode }) {
   return (
@@ -21,8 +19,25 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         <AddCandidateButton />
       </Box>
 
-      <Box component="main" sx={{ ml: `${DRAWER_WIDTH}px`, py: 2 }}>
-        <Container maxWidth="lg">{children}</Container>
+      <Box
+        component="main"
+        sx={{
+          ml: `${DRAWER_WIDTH}px`,
+          py: 2,
+          width: `calc(100vw - ${DRAWER_WIDTH}px)`,
+        }}
+      >
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{
+            px: { xs: 2, md: 3, xl: 4 }, 
+            py: 0,
+            minWidth: 0,              
+          }}
+        >
+          {children}
+        </Container>
       </Box>
     </Box>
   );

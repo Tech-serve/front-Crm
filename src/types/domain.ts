@@ -25,12 +25,23 @@ export interface Interview {
 }
 
 export type DepartmentValue =
-  | "Геймблинг"
-  | "Свипы"
-  | "Сёрч"
-  | "Дизайнеры"
-  | "Техи"
-  | "Админ персонал";
+  | "Gambling"
+  | "Sweeps"
+  | "Search"
+  | "Vitehi"
+  | "TechaDeals"
+  | "AdminStaff";
+
+export type PositionValue =
+  | "Head"
+  | "TeamLead"
+  | "Buyer"
+  | "Designer"
+  | "Accountant"
+  | "Administrator"
+  | "CTO"         // ← ДОБАВЛЕНО
+  | "Translator"  // ← ДОБАВЛЕНО
+  | "Frontend";   // ← ДОБАВЛЕНО
 
 export interface Candidate {
   _id: string;
@@ -40,12 +51,13 @@ export interface Candidate {
   status?: InterviewStatus;
   meetLink?: string;
   department?: DepartmentValue;
+  position?: PositionValue;
   interviews?: Interview[];
 
-  polygraphAt?: string; 
-  acceptedAt?: string;  
-  declinedAt?: string;  
-  canceledAt?: string; 
+  polygraphAt?: string;
+  acceptedAt?: string;
+  declinedAt?: string;
+  canceledAt?: string;
   polygraphAddress?: string;
   createdAt?: string;
   updatedAt?: string;

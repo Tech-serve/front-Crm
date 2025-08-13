@@ -16,6 +16,7 @@ import {
 import type { SlideProps } from "@mui/material/Slide"
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig"
 import { DEPARTMENTS } from "src/config/departmentConfig"
+import { POSITION_OPTIONS } from "src/config/positionConfig"   // ← добавлено
 import { useCreateCandidateMutation } from "src/api/candidatesApi"
 
 const Transition = forwardRef(function Transition(
@@ -45,17 +46,26 @@ export default function CandidateDialog({ open, onClose }: Props) {
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState("not_held")
   const [department, setDepartment] = useState(DEPARTMENTS[0].value)
+  const [position, setPosition] = useState("")                 // ← добавлено
   const [notes, setNotes] = useState("")
 
   const [createCandidate, { isLoading }] = useCreateCandidateMutation()
 
   const handleSubmit = async () => {
     if (!fullName || !email) return
-    await createCandidate({ fullName, email, status, department, notes })
+    await createCandidate({
+      fullName,
+      email,
+      status,
+      department,
+      position: position || undefined,                          // ← добавлено
+      notes
+    })
     setFullName("")
     setEmail("")
     setStatus("not_held")
     setDepartment(DEPARTMENTS[0].value)
+    setPosition("")                                             // ← добавлено
     setNotes("")
     onClose()
   }
@@ -125,12 +135,36 @@ export default function CandidateDialog({ open, onClose }: Props) {
               labelId="dept-label"
               value={department}
               label="Отдел"
-              onChange={(e) => setDepartment(e.target.value as any)}
+              onChange={(e) => {
+                setDepartment(e.target.value as any)
+                setPosition("")                                   // ← сброс должности при смене отдела
+              }}
             >
               {DEPARTMENTS.map((d) => (
                 <MenuItem key={d.value} value={d.value}>
                   <Dot color={d.dot} />
                   {d.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Точно такой же Select-вид, НО без цветных точек */}
+          <FormControl>
+            <InputLabel id="position-label">Position</InputLabel>
+            <Select
+              labelId="position-label"
+              value={position}
+              label="Position"
+              onChange={(e) => setPosition(e.target.value as string)}
+              displayEmpty
+            >
+              <MenuItem value="">
+                <em>—</em>
+              </MenuItem>
+              {(POSITION_OPTIONS[department] || []).map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
                 </MenuItem>
               ))}
             </Select>

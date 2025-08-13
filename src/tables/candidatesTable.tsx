@@ -3,6 +3,7 @@ import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import type { Candidate, InterviewStatus } from "src/types/domain";
 import StatusCell from "src/tables/cells/StatusCell";
 import DepartmentCell from "./cells/DepartmentCell";
+import PositionCell from "./cells/PositionCell";
 import WhenCell from "src/tables/cells/WhenCell";
 
 const LinkCell = ({ url }: { url?: string }) =>
@@ -18,7 +19,7 @@ const LinkCell = ({ url }: { url?: string }) =>
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
-        fontWeight: 500
+        fontWeight: 500,
       }}
     >
       {url}
@@ -28,12 +29,12 @@ const LinkCell = ({ url }: { url?: string }) =>
   );
 
 const candidatesColumns: GridColDef[] = [
-  { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160, editable: true }, // ← добавил editable
+  { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160, editable: true },
   {
     field: "email",
     headerName: "Email",
     width: 200,
-    editable: true, // ← добавил editable
+    editable: true,
     preProcessEditCellProps: (params) => {
       const v = String(params.props.value ?? "").trim();
       const error = v.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -58,31 +59,36 @@ const candidatesColumns: GridColDef[] = [
         value={p.row.statusCode as InterviewStatus}
         options={HR_STATUS_OPTIONS}
       />
-    )
+    ),
   },
   {
     field: "department",
     headerName: "Отдел",
     width: 180,
     sortable: false,
-    renderCell: (p) => (
-      <DepartmentCell row={p.row as Candidate} value={p.value as any} />
-    )
+    renderCell: (p) => <DepartmentCell row={p.row as Candidate} value={p.value as any} />,
+  },
+  {
+    field: "position",
+    headerName: "Position",
+    width: 180,
+    sortable: false,
+    renderCell: (p) => <PositionCell row={p.row as Candidate} value={p.value as any} />,
   },
   {
     field: "meetLink",
     headerName: "Meet",
     width: 280,
     sortable: false,
-    renderCell: (p) => <LinkCell url={p.value as string | undefined} />
+    renderCell: (p) => <LinkCell url={p.value as string | undefined} />,
   },
   {
     field: "notes",
     headerName: "Заметки",
     flex: 1,
     minWidth: 200,
-    editable: true
-  }
+    editable: true,
+  },
 ];
 
 export default candidatesColumns;

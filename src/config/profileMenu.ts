@@ -1,8 +1,11 @@
-export type ProfileMenuItem =
-  | { type: "link"; id: "profile"; label: string; to: string }
-  | { type: "action"; id: "logout"; label: string };
 
-export const PROFILE_MENU: ProfileMenuItem[] = [
-  { type: "link",   id: "profile", label: "Профиль", to: "/profile" },
-  { type: "action", id: "logout",  label: "Выйти" },
-];
+export type ProfileMenuItem =
+  | { id: "profile"; type: "link"; label: string; to: string }
+  | { id: "logout"; type: "action"; label: string };
+
+export const PROFILE_MENU: readonly ProfileMenuItem[] = [
+  { id: "profile", type: "link", label: "Профиль", to: "/profile" },
+  { id: "logout", type: "action", label: "Выйти" },
+] as const;
+
+export default PROFILE_MENU;

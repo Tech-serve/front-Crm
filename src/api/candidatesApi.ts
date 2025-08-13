@@ -1,13 +1,21 @@
-// src/api/candidatesApi.ts
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
-type CreateCandidateBody = { fullName: string; email: string; status?: string; department?: string; notes?: string };
+type CreateCandidateBody = {
+  fullName: string;
+  email: string;
+  status?: string;
+  department?: string;
+  position?: string;              // ← добавлено
+  notes?: string;
+};
+
 type UpdateCandidateBody = {
   notes?: string;
   status?: Candidate["status"];
   meetLink?: string;
   department?: DepartmentValue;
+  position?: string;              // ← добавлено
   interviews?: Interview[];
   polygraphAt?: string | null;
   acceptedAt?: string | null;
@@ -17,7 +25,9 @@ type UpdateCandidateBody = {
   email?: string;
   polygraphAddress?: string | null;
 };
+
 type CandidateWithInterviews = Candidate & { interviews?: Interview[] };
+
 type MetricsResp = {
   current: { not_held: number; reserve: number; success: number; declined: number; canceled: number };
   monthly: { month: string; polygraph: number; accepted: number; declined: number; canceled: number }[];

@@ -41,7 +41,7 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         }}
       >
         <Container
-          maxWidth="lg"
+          maxWidth={false}
           sx={{
             flex: 1,                      // контейнер тоже растягиваем
             display: "flex",

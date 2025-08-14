@@ -51,7 +51,7 @@ const candidatesColumns: GridColDef[] = [
   {
     field: "statusLabel",
     headerName: "Статус",
-    width: 200,
+    width: 250,
     sortable: false,
     renderCell: (p) => (
       <StatusCell

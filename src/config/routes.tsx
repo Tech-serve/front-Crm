@@ -1,15 +1,15 @@
-import Dashboard from "src/common/Dashboard";
 import type { Role } from "../types/domain";
 import type { JSX } from "react";
 import InterviewsPage from "src/pages/CandidatesPage";
 import GeneratorsPage from "src/common/GeneratorsPage";
+import Dashboard from "src/pages/Dashboard";
 
 export type AppRoute = {
   path: string;
   element: JSX.Element;
-  label?: string;       // для меню
-  roles?: Role[];       // пусто = доступно всем авторизованным
-  inMenu?: boolean;     // отображать в меню
+  label?: string;       
+  roles?: Role[]; 
+  inMenu?: boolean;     
 };
 
 export const routes: AppRoute[] = [

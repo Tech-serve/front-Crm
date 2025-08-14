@@ -10,7 +10,7 @@ type Props = {
   widthPx?: number;
 };
 
-const WIDTH = 170;
+const WIDTH = 140;
 
 const CompactSelect = styled(Select)(({ theme }) => ({
   "& .MuiSelect-select": {

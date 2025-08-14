@@ -12,7 +12,7 @@ type Props = {
   widthPx?: number;
 };
 
-const STATUS_WIDTH_DEFAULT = 160;
+const STATUS_WIDTH_DEFAULT = 215;
 
 const CompactSelect = styled(Select)(({ theme }) => ({
   minWidth: 0,

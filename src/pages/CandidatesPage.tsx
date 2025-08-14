@@ -45,7 +45,7 @@ export default function CandidatesPage() {
   );
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
       <Typography variant="h5" mb={2}>
         Кандидаты
       </Typography>
@@ -56,7 +56,7 @@ export default function CandidatesPage() {
         </Typography>
       )}
 
-      <div style={{ height: 600, width: "100%" }}>
+      <Box sx={{ flex: 1, minHeight: 0, width: "100%" }}>
         <DataGrid
           rows={rows}
           columns={candidatesColumns}
@@ -78,8 +78,9 @@ export default function CandidatesPage() {
             return newRow;
           }}
           onProcessRowUpdateError={(e) => console.error(e)}
+          sx={{ height: "88%" }}
         />
-      </div>
+      </Box>
     </Box>
   );
 }

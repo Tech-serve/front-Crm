@@ -22,9 +22,9 @@ export const POSITION_OPTIONS: Record<string, { value: string; label: string }[]
     { value: "Administrator", label: "Administrator" },
   ],
   Vitehi: [],
-  TechaDeals: [
-    { value: "CTO", label: "CTO" },             // ← ДОБАВЛЕНО
-    { value: "Translator", label: "Translator" }, // ← ДОБАВЛЕНО
-    { value: "Frontend", label: "Frontend" },     // ← ДОБАВЛЕНО
+  Tech: [
+    { value: "CTO", label: "CTO" },           
+    { value: "Translator", label: "Translator" }, 
+    { value: "Frontend", label: "Frontend" }, 
   ],
 } as const;

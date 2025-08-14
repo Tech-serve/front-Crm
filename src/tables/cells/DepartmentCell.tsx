@@ -20,9 +20,9 @@ const CompactSelect = styled(Select)(({ theme }) => ({
     alignItems: "center",
     gap: 8,
     boxSizing: "border-box",
-    whiteSpace: "nowrap",       
-    overflow: "hidden",         
-    textOverflow: "ellipsis",  
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   "& .MuiOutlinedInput-notchedOutline": {
     borderRadius: theme.shape.borderRadius,
@@ -50,7 +50,7 @@ export default function DepartmentCell({ row, value, widthPx }: Props) {
   }, [value, row.department]);
 
   const handle = async (next: DepartmentValue) => {
-    await patchCandidate({ id: row._id, body: { department: next } }).unwrap();
+    await patchCandidate({ id: row._id, body: { department: next, position: "" } }).unwrap();
   };
 
   return (

@@ -29,7 +29,7 @@ export type DepartmentValue =
   | "Sweeps"
   | "Search"
   | "Vitehi"
-  | "TechaDeals"
+  | "Tech"
   | "AdminStaff";
 
 export type PositionValue =

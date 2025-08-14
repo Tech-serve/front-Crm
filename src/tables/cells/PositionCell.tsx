@@ -1,28 +1,24 @@
 import { Box, MenuItem, Select, styled } from "@mui/material";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
-import type { Candidate } from "src/types/domain";
+import type { Candidate, PositionValue } from "src/types/domain";
 
 type Props = {
   row: Candidate;
   value?: PositionValue;
 };
 
-/** Стилизованный Select под высоту и выравнивание, как у других ячеек */
 const CellSelect = styled(Select)({
-  // высота контрола, как у "компактных" ячеек
   height: 32,
   minHeight: 32,
-  // содержимое селекта по центру вертикали
   "& .MuiSelect-select": {
     display: "flex",
     alignItems: "center",
     padding: "6px 10px",
-    minHeight: 0,         // убрать дефолтные 1.4375em
+    minHeight: 0,
     lineHeight: "20px",
     fontSize: 13,
   },
-  // рамка как у остальных ячеек
   "& .MuiOutlinedInput-notchedOutline": {
     border: "1px dashed rgba(255,255,255,0.25)",
   },

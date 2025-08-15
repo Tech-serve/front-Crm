@@ -87,10 +87,9 @@ export default function StatusCell({
 
   const body: any = { interviews: list };
 
-  // если статус один из конечных — ставим текущую дату как стартовое значение для пикера
   const field = map[next];
   if (field) {
-    body[field] = nowIso; // теперь WhenCell сразу увидит дату и покажет её
+    body[field] = nowIso;
   }
 
   await patchCandidate({ id: row._id, body }).unwrap();

@@ -1,4 +1,4 @@
-// frontend/src/tables/cells/MidCell.tsx
+// frontend/src/tables/cells/MeetCell.tsx
 import { useMemo, useState } from "react";
 import type { Candidate } from "src/types/domain";
 import {
@@ -27,9 +27,7 @@ export default function MidCell({ row, url }: Props) {
   const [dt, setDt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-      d.getHours()
-    )}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -66,7 +64,7 @@ export default function MidCell({ row, url }: Props) {
 
       setLocalUrl(meetLink);
       if (row._id) {
-        patchCandidate({ id: row._id, body: { meetLink } });
+        await patchCandidate({ id: row._id, body: { meetLink } }).unwrap();
       }
       setOpen(false);
     } catch (e: any) {
@@ -138,31 +136,13 @@ export default function MidCell({ row, url }: Props) {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField label="Тема" value={summary} onChange={(e) => setSummary(e.target.value)} fullWidth />
-            <TextField
-              label="Участники (email, через запятую)"
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              type="datetime-local"
-              label="Дата и время"
-              value={dt}
-              onChange={(e) => setDt(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            {err && (
-              <Typography color="error" variant="body2">
-                Webhook: {err}
-              </Typography>
-            )}
+            <TextField label="Участники (email, через запятую)" value={emails} onChange={(e) => setEmails(e.target.value)} fullWidth />
+            <TextField type="datetime-local" label="Дата и время" value={dt} onChange={(e) => setDt(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+            {err && <Typography color="error" variant="body2">Webhook: {err}</Typography>}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} disabled={loading}>
-            Отмена
-          </Button>
+          <Button onClick={() => setOpen(false)} disabled={loading}>Отмена</Button>
           <Button
             onClick={handleCreate}
             disabled={loading}

@@ -1,8 +1,5 @@
 // frontend/src/api/meetWebhook.ts
-const WEBHOOK_URL =
-  import.meta.env.VITE_MEET_WEBHOOK_URL || `${import.meta.env.VITE_API_BASE}/webhook`;
-
-export type MeetWebhookPayload = {
+export type CreateMeetInput = {
   issueKey: string;
   summary: string;
   candidateEmail: string;
@@ -12,17 +9,18 @@ export type MeetWebhookPayload = {
   interviewDate: string;
 };
 
-export async function createMeetWebhook(p: MeetWebhookPayload): Promise<string> {
-  const r = await fetch(WEBHOOK_URL, {
+export async function createMeetWebhook(input: CreateMeetInput): Promise<string> {
+  const url = import.meta.env.VITE_MEET_WEBHOOK_URL as string;
+  const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(p),
+    body: JSON.stringify(input),
   });
-  if (!r.ok) {
-    const t = await r.text().catch(() => "");
-    throw new Error(t || `HTTP ${r.status}`);
-  }
-  const json = await r.json();
-  if (!json?.meetLink) throw new Error("No meetLink");
-  return String(json.meetLink);
+
+  const data: any = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(String(data?.error || resp.statusText));
+
+  const link = data?.meetLink || data?.link || data?.url;
+  if (typeof link !== "string" || link.length < 8) throw new Error("Invalid response");
+  return link;
 }

@@ -29,7 +29,7 @@ export type DepartmentValue =
   | "Sweeps"
   | "Search"
   | "Tech"
-  | "AdminStaff";
+  | "Admin";
 
 export type PositionValue =
   | "Head"
@@ -71,5 +71,5 @@ export const DEPARTMENTS = [
   { value: "Sweeps",     label: "Sweeps",     bg: "#FFF3E0", fg: "#E65100", dot: "#FFB74D" },
   { value: "Search",     label: "Search",     bg: "#F1F8E9", fg: "#33691E", dot: "#AED581" },
   { value: "Tech", label: "Tech", bg: "#EDE7F6", fg: "#311B92", dot: "#B39DDB" },
-  { value: "AdminStaff", label: "AdminStaff", bg: "#FCE4EC", fg: "#880E4F", dot: "#F48FB1" },
+  { value: "Admin", label: "Admin", bg: "#FCE4EC", fg: "#880E4F", dot: "#F48FB1" },
 ] as const;

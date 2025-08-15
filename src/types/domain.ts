@@ -30,7 +30,7 @@ export type DepartmentValue =
   | "Search"
   | "Vitehi"
   | "Tech"
-  | "AdminStaff";
+  | "Admin";
 
 export type PositionValue =
   | "Head"

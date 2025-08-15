@@ -17,7 +17,7 @@ export const POSITION_OPTIONS: Record<string, { value: string; label: string }[]
     { value: "Buyer", label: "Buyer" },
     { value: "Designer", label: "Designer" },
   ],
-  AdminStaff: [
+  Admin: [
     { value: "Accountant", label: "Accountant" },
     { value: "Administrator", label: "Administrator" },
   ],

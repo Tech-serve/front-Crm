@@ -5,6 +5,7 @@ import StatusCell from "src/tables/cells/StatusCell";
 import DepartmentCell from "./cells/DepartmentCell";
 import PositionCell from "./cells/PositionCell";
 import WhenCell from "src/tables/cells/WhenCell";
+import MidCell from "./cells/MeetCell";
 
 const LinkCell = ({ url }: { url?: string }) =>
   url ? (
@@ -77,10 +78,10 @@ const candidatesColumns: GridColDef[] = [
   },
   {
     field: "meetLink",
-    headerName: "Meet",
+    headerName: "Google meet",
     width: 280,
     sortable: false,
-    renderCell: (p) => <LinkCell url={p.value as string | undefined} />,
+    renderCell: (p) => <MidCell row={p.row as Candidate} url={p.value as string | undefined} />,
   },
   {
     field: "notes",

@@ -1,12 +1,14 @@
+// frontend/src/api/candidatesApi.ts
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
 type CreateCandidateBody = {
   fullName: string;
   email: string;
+  phone?: string;
   status?: string;
   department?: string;
-  position?: string;              // ← добавлено
+  position?: string;
   notes?: string;
 };
 
@@ -14,8 +16,9 @@ type UpdateCandidateBody = {
   notes?: string;
   status?: Candidate["status"];
   meetLink?: string;
+  phone?: string;
   department?: DepartmentValue;
-  position?: string;              // ← добавлено
+  position?: string;
   interviews?: Interview[];
   polygraphAt?: string | null;
   acceptedAt?: string | null;

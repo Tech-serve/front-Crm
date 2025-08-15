@@ -90,7 +90,7 @@ export default function StatusCell({
   const field = map[next];
   if (field) {
     body[field] = nowIso;
-  }
+    }
 
   await patchCandidate({ id: row._id, body }).unwrap();
 };

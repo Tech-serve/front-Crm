@@ -16,7 +16,7 @@ import {
 import type { SlideProps } from "@mui/material/Slide"
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig"
 import { DEPARTMENTS } from "src/config/departmentConfig"
-import { POSITION_OPTIONS } from "src/config/positionConfig"   // ← добавлено
+import { POSITION_OPTIONS } from "src/config/positionConfig"
 import { useCreateCandidateMutation } from "src/api/candidatesApi"
 
 const Transition = forwardRef(function Transition(
@@ -43,10 +43,11 @@ type Props = { open: boolean; onClose: () => void }
 
 export default function CandidateDialog({ open, onClose }: Props) {
   const [fullName, setFullName] = useState("")
+  const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState("not_held")
   const [department, setDepartment] = useState(DEPARTMENTS[0].value)
-  const [position, setPosition] = useState("")                 // ← добавлено
+  const [position, setPosition] = useState("")
   const [notes, setNotes] = useState("")
 
   const [createCandidate, { isLoading }] = useCreateCandidateMutation()
@@ -56,16 +57,18 @@ export default function CandidateDialog({ open, onClose }: Props) {
     await createCandidate({
       fullName,
       email,
+      phone: phone || undefined,
       status,
       department,
-      position: position || undefined,                          // ← добавлено
+      position: position || undefined,
       notes
     })
     setFullName("")
+    setPhone("")
     setEmail("")
     setStatus("not_held")
     setDepartment(DEPARTMENTS[0].value)
-    setPosition("")                                             // ← добавлено
+    setPosition("")
     setNotes("")
     onClose()
   }
@@ -87,8 +90,8 @@ export default function CandidateDialog({ open, onClose }: Props) {
           width: 480,
           maxWidth: "none",
           height: "100vh",
-          maxHeight: "100vh",     // переopпределяет calc(100% - 64px)
-          m: 0,                   // без внешних отступов
+          maxHeight: "100vh",
+          m: 0,
           borderRadius: 0,
           boxShadow: (t) => t.shadows[8],
           display: "flex",
@@ -104,6 +107,12 @@ export default function CandidateDialog({ open, onClose }: Props) {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             autoFocus
+          />
+          <TextField
+            label="Телефон"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+380XXXXXXXXX"
           />
           <TextField
             label="Email"
@@ -137,7 +146,7 @@ export default function CandidateDialog({ open, onClose }: Props) {
               label="Отдел"
               onChange={(e) => {
                 setDepartment(e.target.value as any)
-                setPosition("")                                   // ← сброс должности при смене отдела
+                setPosition("")
               }}
             >
               {DEPARTMENTS.map((d) => (
@@ -149,7 +158,6 @@ export default function CandidateDialog({ open, onClose }: Props) {
             </Select>
           </FormControl>
 
-          {/* Точно такой же Select-вид, НО без цветных точек */}
           <FormControl>
             <InputLabel id="position-label">Position</InputLabel>
             <Select

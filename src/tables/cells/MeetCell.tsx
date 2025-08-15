@@ -1,4 +1,4 @@
-// frontend/src/tables/cells/MeetCell.tsx
+// frontend/src/tables/cells/MidCell.tsx
 import { useMemo, useState } from "react";
 import type { Candidate } from "src/types/domain";
 import {
@@ -20,6 +20,16 @@ import { usePatchCandidateMutation } from "src/api/candidatesApi";
 
 type Props = { row: Candidate; url?: string };
 
+function shortMeet(u: string) {
+  try {
+    const { hostname, pathname } = new URL(u);
+    const last = pathname.split("/").filter(Boolean).pop() || "";
+    return `${hostname}/${last}`;
+  } catch {
+    return u;
+  }
+}
+
 export default function MidCell({ row, url }: Props) {
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState("Интервью");
@@ -27,13 +37,24 @@ export default function MidCell({ row, url }: Props) {
   const [dt, setDt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+      d.getHours()
+    )}:${pad(d.getMinutes())}`;
   });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
   const finalUrl = useMemo(() => localUrl || url, [localUrl, url]);
   const [patchCandidate] = usePatchCandidateMutation();
+
+  const scheduledAtISO =
+    row.interviews && row.interviews.length > 0 ? row.interviews[0]?.scheduledAt : undefined;
+
+  const scheduledLabel = useMemo(() => {
+    if (!scheduledAtISO) return "";
+    const d = new Date(scheduledAtISO as any);
+    return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+  }, [scheduledAtISO]);
 
   async function handleCreate() {
     setLoading(true);
@@ -63,9 +84,24 @@ export default function MidCell({ row, url }: Props) {
       });
 
       setLocalUrl(meetLink);
+
       if (row._id) {
-        await patchCandidate({ id: row._id, body: { meetLink } }).unwrap();
+        const nextIv = {
+          scheduledAt: iso,
+          durationMinutes: 60,
+          participants: valids,
+          meetLink,
+          status: "not_held" as const,
+          source: "crm" as const,
+          notes: summary,
+        };
+        const prev = Array.isArray(row.interviews) ? row.interviews : [];
+        await patchCandidate({
+          id: row._id,
+          body: { meetLink, interviews: [nextIv as any, ...prev] },
+        }).unwrap();
       }
+
       setOpen(false);
     } catch (e: any) {
       setErr(String(e?.message || e));
@@ -77,29 +113,36 @@ export default function MidCell({ row, url }: Props) {
   if (finalUrl) {
     return (
       <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Link
-          href={finalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          underline="none"
-          sx={(t) => ({
-            px: 1.25,
-            py: 0.5,
-            borderRadius: 2,
-            fontWeight: 700,
-            lineHeight: 1.2,
-            maxWidth: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            color: t.palette.primary.main,
-            backgroundColor: alpha(t.palette.primary.main, 0.12),
-            border: `1px solid ${alpha(t.palette.primary.main, 0.25)}`,
-            "&:hover": { backgroundColor: alpha(t.palette.primary.main, 0.2) },
-          })}
-        >
-          {finalUrl}
-        </Link>
+        <Stack spacing={0.5} sx={{ alignItems: "center", maxWidth: "100%" }}>
+          <Link
+            href={finalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="none"
+            sx={(t) => ({
+              px: 1.25,
+              py: 0.5,
+              borderRadius: 2,
+              fontWeight: 700,
+              lineHeight: 1.2,
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: t.palette.primary.main,
+              backgroundColor: alpha(t.palette.primary.main, 0.12),
+              border: `1px solid ${alpha(t.palette.primary.main, 0.25)}`,
+              "&:hover": { backgroundColor: alpha(t.palette.primary.main, 0.2) },
+            })}
+          >
+            {shortMeet(finalUrl)}
+          </Link>
+          {scheduledLabel ? (
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              {scheduledLabel}
+            </Typography>
+          ) : null}
+        </Stack>
       </Box>
     );
   }
@@ -136,13 +179,31 @@ export default function MidCell({ row, url }: Props) {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField label="Тема" value={summary} onChange={(e) => setSummary(e.target.value)} fullWidth />
-            <TextField label="Участники (email, через запятую)" value={emails} onChange={(e) => setEmails(e.target.value)} fullWidth />
-            <TextField type="datetime-local" label="Дата и время" value={dt} onChange={(e) => setDt(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
-            {err && <Typography color="error" variant="body2">Webhook: {err}</Typography>}
+            <TextField
+              label="Участники (email, через запятую)"
+              value={emails}
+              onChange={(e) => setEmails(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              type="datetime-local"
+              label="Дата и время"
+              value={dt}
+              onChange={(e) => setDt(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+            {err && (
+              <Typography color="error" variant="body2">
+                Webhook: {err}
+              </Typography>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} disabled={loading}>Отмена</Button>
+          <Button onClick={() => setOpen(false)} disabled={loading}>
+            Отмена
+          </Button>
           <Button
             onClick={handleCreate}
             disabled={loading}

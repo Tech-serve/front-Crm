@@ -1,3 +1,4 @@
+// frontend/src/types/domain.ts
 export type Role = "hr" | "buyer" | "head";
 
 export interface User {
@@ -6,12 +7,7 @@ export interface User {
   token?: string;
 }
 
-export type InterviewStatus =
-  | "not_held"
-  | "success"
-  | "declined"
-  | "reserve"
-  | "canceled";
+export type InterviewStatus = "not_held" | "success" | "declined" | "reserve" | "canceled";
 
 export interface Interview {
   _id?: string;
@@ -24,13 +20,7 @@ export interface Interview {
   notes?: string;
 }
 
-export type DepartmentValue =
-  | "Gambling"
-  | "Sweeps"
-  | "Search"
-  | "Vitehi"
-  | "Tech"
-  | "Admin";
+export type DepartmentValue = "Gambling" | "Sweeps" | "Search" | "Vitehi" | "Tech" | "Admin";
 
 export type PositionValue =
   | "Head"
@@ -39,21 +29,21 @@ export type PositionValue =
   | "Designer"
   | "Accountant"
   | "Administrator"
-  | "CTO"         // ← ДОБАВЛЕНО
-  | "Translator"  // ← ДОБАВЛЕНО
-  | "Frontend";   // ← ДОБАВЛЕНО
+  | "CTO"
+  | "Translator"
+  | "Frontend";
 
 export interface Candidate {
   _id: string;
   fullName: string;
   email: string;
+  phone?: string;
   notes?: string;
   status?: InterviewStatus;
   meetLink?: string;
   department?: DepartmentValue;
   position?: PositionValue;
   interviews?: Interview[];
-
   polygraphAt?: string;
   acceptedAt?: string;
   declinedAt?: string;

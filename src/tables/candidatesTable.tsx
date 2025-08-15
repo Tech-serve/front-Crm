@@ -1,3 +1,4 @@
+// frontend/src/tables/candidatesTable.tsx
 import type { GridColDef } from "@mui/x-data-grid";
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import type { Candidate, InterviewStatus } from "src/types/domain";
@@ -31,6 +32,17 @@ const LinkCell = ({ url }: { url?: string }) =>
 
 const candidatesColumns: GridColDef[] = [
   { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160, editable: true },
+  {
+    field: "phone",
+    headerName: "Телефон",
+    width: 160,
+    editable: true,
+    preProcessEditCellProps: (params) => {
+      const v = String(params.props.value ?? "").trim();
+      const ok = v.length === 0 || /^[+()\d\s-]{5,}$/.test(v);
+      return { ...params.props, value: v, error: !ok };
+    },
+  },
   {
     field: "email",
     headerName: "Email",

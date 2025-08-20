@@ -91,7 +91,7 @@ const candidatesColumns: GridColDef[] = [
   {
     field: "meetLink",
     headerName: "Google meet",
-    width: 280,
+    width: 400,
     sortable: false,
     renderCell: (p) => <MidCell row={p.row as Candidate} url={p.value as string | undefined} />,
   },

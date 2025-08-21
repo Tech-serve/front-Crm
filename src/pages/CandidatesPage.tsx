@@ -9,6 +9,7 @@ import {
 import candidatesColumns from "src/tables/candidatesTable";
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import type { Candidate } from "src/types/domain";
+import AddCandidateButton from "src/components/candidates/AddCandidateButton";
 
 export default function CandidatesPage() {
   const { data, isLoading, isError, error } = useGetCandidatesQuery({
@@ -82,6 +83,7 @@ export default function CandidatesPage() {
           sx={{ height: "88%" }}
         />
       </Box>
+      <AddCandidateButton title="Добавить кандидата" />
     </Box>
   );
 }

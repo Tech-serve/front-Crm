@@ -22,9 +22,9 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
       <AppHeader drawerWidth={DRAWER_WIDTH} />
       <Toolbar sx={{ minHeight: 56, flexShrink: 0 }} />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 2 }}>
+      {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 2 }}>
         <AddCandidateButton />
-      </Box>
+      </Box> */}
       <Box
         component="main"
         sx={{

@@ -36,7 +36,6 @@ type MetricsResp = {
   firstTouches: { month: string; created: number }[];
 };
 
-// ---- Snapshots
 type SnapshotsResp = {
   items: Array<{
     month: string; // YYYY-MM
@@ -59,21 +58,38 @@ type FreezeResp = {
 
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getCandidates: build.query<Paginated<CandidateWithInterviews>, { page?: number; pageSize?: number }>({
-      query: ({ page = 1, pageSize = 1000 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
+    // --- Список кандидатов (с пагинацией)
+    getCandidates: build.query<
+      Paginated<CandidateWithInterviews>,
+      { page?: number; pageSize?: number }
+    >({
+      query: ({ page = 1, pageSize = 1000 } = {}) =>
+        `/candidates?page=${page}&pageSize=${pageSize}`,
       providesTags: (res) =>
         res?.items
-          ? [...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })), { type: "Candidates" as const, id: "LIST" }]
+          ? [
+              ...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })),
+              { type: "Candidates" as const, id: "LIST" },
+            ]
           : [{ type: "Candidates" as const, id: "LIST" }],
     }),
+
+    // --- Создание кандидата
     createCandidate: build.mutation<Candidate, CreateCandidateBody>({
       query: (body) => ({ url: "/candidates", method: "POST", body }),
       invalidatesTags: [{ type: "Candidates", id: "LIST" }],
     }),
+
+    // --- Обновление кандидата (патч)
     patchCandidate: build.mutation<Candidate, { id: string; body: UpdateCandidateBody }>({
       query: ({ id, body }) => ({ url: `/candidates/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }, { type: "Candidates", id: "LIST" }],
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: "Candidates", id },
+        { type: "Candidates", id: "LIST" },
+      ],
     }),
+
+    // --- Метрики (счётчики событий по датам + текущие статусы)
     getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({
       query: (q) => {
         const params = new URLSearchParams();
@@ -83,9 +99,13 @@ export const candidatesApi = baseApi.injectEndpoints({
         return `/candidates/metrics${qs ? `?${qs}` : ""}`;
       },
     }),
+
+    // --- Снепшоты (замороженные срезы по статусам)
     getCandidateSnapshots: build.query<SnapshotsResp, { from: string; to: string }>({
       query: ({ from, to }) => ({ url: "/candidates/snapshots", params: { from, to } }),
     }),
+
+    // --- Заморозка снепшота (обычно прошлый месяц)
     freezeCandidateSnapshot: build.mutation<FreezeResp, { month?: string } | void>({
       query: (body) => ({
         url: "/candidates/snapshots/freeze",

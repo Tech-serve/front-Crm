@@ -16,7 +16,6 @@ import logoUrl from "src/assets/logo.png";
 
 export const DRAWER_WIDTH = 88;
 
-/* ─── UI tokens ─── */
 const ui = {
   railBg: "#1f334b",
   railBorder: "rgba(255,255,255,0.08)",
@@ -29,7 +28,6 @@ const ui = {
   ripple: "rgba(200, 215, 235, 0.4)",
 };
 
-/* ─── стили ─── */
 const Rail = styled(Box)({
   position: "fixed",
   top: 0,
@@ -92,13 +90,12 @@ const Label = styled(ListItemText)({
   "& .MuiListItemText-primary": { fontSize: 11, color: "inherit", opacity: 0.95 },
 });
 
-/* ─── компонент ─── */
 export default function SideNav() {
   const items = [
-    { to: "/",               icon: <DashboardRoundedIcon />, label: "Process"    },
-    { to: "/hr/candidates",  icon: <PeopleRoundedIcon />,   label: "Candidates" }, // ← исправлено
-    { to: "/buyer/generators", icon: <ListAltRoundedIcon />, label: "Products"  },
-    { to: "/info",           icon: <InsightsRoundedIcon />, label: "Info"       },
+    { to: "/",                      icon: <DashboardRoundedIcon />, label: "Process"    },
+    { to: "/hr/candidates",         icon: <PeopleRoundedIcon />,    label: "Candidates" },
+    { to: "/hr/employeesPage",   icon: <ListAltRoundedIcon />,   label: "Employees"  }, 
+    { to: "/info",                  icon: <InsightsRoundedIcon />,  label: "Info"       },
   ];
 
   return (

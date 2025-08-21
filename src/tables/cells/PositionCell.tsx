@@ -1,16 +1,17 @@
 import { useMemo } from "react";
 import { Box, MenuItem, Select, styled } from "@mui/material";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
-import { DEPARTMENTS } from "src/config/departmentConfig";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
-import type { Candidate, PositionValue } from "src/types/domain";
+import { usePatchEmployeeMutation } from "src/api/employeesApi";
 
 type Props = {
-  row: Candidate;
-  value?: PositionValue;
+  row: any;
+  value?: string | null;
+  widthPx?: number;
+  patchKind?: "candidate" | "employee";
 };
 
-const WIDTH = 140;
+const WIDTH = 160;
 
 const CompactSelect = styled(Select)(({ theme }) => ({
   "& .MuiSelect-select": {
@@ -19,58 +20,42 @@ const CompactSelect = styled(Select)(({ theme }) => ({
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    boxSizing: "border-box",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
   },
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderRadius: theme.shape.borderRadius,
-  },
+  "& .MuiOutlinedInput-notchedOutline": { borderRadius: theme.shape.borderRadius },
 }));
 
-export default function PositionCell({ row, value }: Props) {
+export default function PositionCell({ row, value, widthPx, patchKind = "candidate" }: Props) {
   const [patchCandidate] = usePatchCandidateMutation();
+  const [patchEmployee] = usePatchEmployeeMutation();
 
-  const options = useMemo(
-    () => POSITION_OPTIONS[row.department || ""] || [],
-    [row.department]
-  );
-  const disabled = options.length === 0;
+  const dept = row?.department as keyof typeof POSITION_OPTIONS;
+  const options = POSITION_OPTIONS[dept] || [];
+  const current = useMemo(() => value ?? row?.position ?? "", [value, row?.position]);
 
-  // цвета берём ровно как в DepartmentCell
-  const dep = useMemo(() => {
-    const v = (row.department as any) ?? DEPARTMENTS[0].value;
-    return DEPARTMENTS.find((d) => d.value === v) || DEPARTMENTS[0];
-  }, [row.department]);
+  const handle = async (next: string) => {
+    if (patchKind === "employee") {
+      await patchEmployee({ id: row._id, body: { position: next || null } }).unwrap();
+    } else {
+      await patchCandidate({ id: row._id, body: { position: next || "" } }).unwrap();
+    }
+  };
 
   return (
     <Box sx={{ display: "inline-flex" }}>
       <CompactSelect
         size="small"
-        value={value || ""}
-        onChange={(e) => {
-          const position = e.target.value as PositionValue;
-          patchCandidate({ id: row._id, body: { position } });
-        }}
+        value={current}
+        onChange={(e) => handle(e.target.value as string)}
         displayEmpty
-        renderValue={(selected) => (selected ? (selected as string) : "—")}
-        sx={{
-          width: WIDTH,
-          bgcolor: dep.bg,
-          color: dep.fg,
-          "& .MuiSvgIcon-root": { color: dep.fg },
-        }}
+        sx={{ width: widthPx ?? WIDTH }}
         MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
-        disabled={disabled}
       >
         <MenuItem value="">
           <em>—</em>
         </MenuItem>
-
-        {options.map((opt) => (
-          <MenuItem key={opt.value} value={opt.value}>
-            {opt.label}
+        {options.map((o) => (
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
           </MenuItem>
         ))}
       </CompactSelect>

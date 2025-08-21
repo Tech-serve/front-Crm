@@ -5,7 +5,8 @@ export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_BASE,
     credentials: "include",
+    prepareHeaders: (headers) => headers,
   }),
-  tagTypes: ["Interviews", "Candidates"],
+  tagTypes: ["Candidates", "Interviews", "Employees"],
   endpoints: () => ({}),
 });

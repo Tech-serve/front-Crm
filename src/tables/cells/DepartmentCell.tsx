@@ -2,12 +2,14 @@ import { useMemo } from "react";
 import { Box, MenuItem, Select, styled } from "@mui/material";
 import { DEPARTMENTS } from "src/config/departmentConfig";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
-import type { Candidate, DepartmentValue } from "src/types/domain";
+import { usePatchEmployeeMutation } from "src/api/employeesApi";
+import type { DepartmentValue } from "src/types/domain";
 
 type Props = {
-  row: Candidate;
+  row: any;
   value?: DepartmentValue;
   widthPx?: number;
+  patchKind?: "candidate" | "employee";
 };
 
 const WIDTH = 140;
@@ -30,27 +32,24 @@ const CompactSelect = styled(Select)(({ theme }) => ({
 }));
 
 const Dot = ({ color }: { color: string }) => (
-  <span
-    style={{
-      display: "inline-block",
-      width: 8,
-      height: 8,
-      borderRadius: "50%",
-      background: color,
-    }}
-  />
+  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color }} />
 );
 
-export default function DepartmentCell({ row, value, widthPx }: Props) {
+export default function DepartmentCell({ row, value, widthPx, patchKind = "candidate" }: Props) {
   const [patchCandidate] = usePatchCandidateMutation();
+  const [patchEmployee] = usePatchEmployeeMutation();
 
   const current = useMemo(() => {
-    const v = value ?? row.department ?? DEPARTMENTS[0].value;
+    const v = value ?? row?.department ?? DEPARTMENTS[0].value;
     return DEPARTMENTS.find((d) => d.value === v) || DEPARTMENTS[0];
-  }, [value, row.department]);
+  }, [value, row?.department]);
 
   const handle = async (next: DepartmentValue) => {
-    await patchCandidate({ id: row._id, body: { department: next, position: "" } }).unwrap();
+    if (patchKind === "employee") {
+      await patchEmployee({ id: row._id, body: { department: next, position: null } }).unwrap();
+    } else {
+      await patchCandidate({ id: row._id, body: { department: next, position: "" } }).unwrap();
+    }
   };
 
   return (

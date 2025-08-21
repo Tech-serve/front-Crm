@@ -4,11 +4,11 @@ import PrivateLayout from "../layouts/PrivateLayout";
 import PublicLayout  from "../layouts/PublicLayout";
 
 import LoginPage      from "src/common/LoginPage";
-import GeneratorsPage from "src/common/GeneratorsPage";
 import CandidatesPage from "src/pages/CandidatesPage";
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
 import Dashboard from "src/pages/Dashboard";
+import EmployeesPage from "src/pages/EmployeesPage";
 
 export function AppRoutes() {
   return (
@@ -45,17 +45,16 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/buyer/generators"
+        path="/hr/employeesPage"
         element={
-          <RequireRoles roles={["buyer", "head"]}>
+          <RequireRoles roles={["hr", "head"]}>
             <PrivateLayout>
-              <GeneratorsPage />
+              <EmployeesPage />
             </PrivateLayout>
           </RequireRoles>
         }
       />
 
-      {/* fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

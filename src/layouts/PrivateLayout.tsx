@@ -25,28 +25,26 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 2 }}>
         <AddCandidateButton />
       </Box>
-
-      {/* ГЛАВНОЕ: делаем main резиновым и передаём высоту вниз */}
       <Box
         component="main"
         sx={{
           ml: `${DRAWER_WIDTH}px`,
           py: 2,
           pr: 2,
-          flex: 1,                       // растягиваем на всю оставшуюся высоту
+          flex: 1,                       
           display: "flex",
           flexDirection: "column",
           minWidth: 0,
-          minHeight: 0,                  // важно для корректной прокрутки дочерних flex-контейнеров
+          minHeight: 0,                  
         }}
       >
         <Container
           maxWidth={false}
           sx={{
-            flex: 1,                      // контейнер тоже растягиваем
+            flex: 1,                     
             display: "flex",
             flexDirection: "column",
-            minHeight: 0,                 // даём детям возможность занять 100%
+            minHeight: 0,                 
           }}
         >
           {children}

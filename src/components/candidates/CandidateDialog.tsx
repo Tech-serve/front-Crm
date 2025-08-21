@@ -1,4 +1,4 @@
-import { useState, forwardRef, type Ref, type ReactElement } from "react"
+import { useState, forwardRef, type Ref, type ReactElement } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,19 +12,24 @@ import {
   InputLabel,
   Select,
   MenuItem
-} from "@mui/material"
-import type { SlideProps } from "@mui/material/Slide"
-import { HR_STATUS_OPTIONS } from "src/config/statusConfig"
-import { DEPARTMENTS } from "src/config/departmentConfig"
-import { POSITION_OPTIONS } from "src/config/positionConfig"
-import { useCreateCandidateMutation } from "src/api/candidatesApi"
+} from "@mui/material";
+import type { SlideProps } from "@mui/material/Slide";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { type Dayjs } from "dayjs";
+import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
+import { DEPARTMENTS } from "src/config/departmentConfig";
+import { POSITION_OPTIONS } from "src/config/positionConfig";
+import { useCreateCandidateMutation } from "src/api/candidatesApi";
+import { useCreateEmployeeMutation } from "src/api/employeesApi";
 
 const Transition = forwardRef(function Transition(
   props: SlideProps & { children: ReactElement },
   ref: Ref<unknown>
 ) {
-  return <Slide direction="left" ref={ref} {...props} />
-})
+  return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const Dot = ({ color }: { color: string }) => (
   <span
@@ -37,41 +42,60 @@ const Dot = ({ color }: { color: string }) => (
       marginRight: 8
     }}
   />
-)
+);
 
-type Props = { open: boolean; onClose: () => void }
+type Props = { open: boolean; onClose: () => void; mode?: "candidate" | "employee" };
 
-export default function CandidateDialog({ open, onClose }: Props) {
-  const [fullName, setFullName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [email, setEmail] = useState("")
-  const [status, setStatus] = useState("not_held")
-  const [department, setDepartment] = useState(DEPARTMENTS[0].value)
-  const [position, setPosition] = useState("")
-  const [notes, setNotes] = useState("")
+export default function CandidateDialog({ open, onClose, mode = "candidate" }: Props) {
+  const isEmployee = mode === "employee";
 
-  const [createCandidate, { isLoading }] = useCreateCandidateMutation()
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("not_held");
+  const [department, setDepartment] = useState(DEPARTMENTS[0].value);
+  const [position, setPosition] = useState("");
+  const [notes, setNotes] = useState("");
+  const [birthday, setBirthday] = useState<Dayjs | null>(null);
+
+  const [createCandidate, { isLoading: isCreatingCandidate }] = useCreateCandidateMutation();
+  const [createEmployee, { isLoading: isCreatingEmployee }] = useCreateEmployeeMutation();
 
   const handleSubmit = async () => {
-    if (!fullName || !email) return
-    await createCandidate({
-      fullName,
-      email,
-      phone: phone || undefined,
-      status,
-      department,
-      position: position || undefined,
-      notes
-    })
-    setFullName("")
-    setPhone("")
-    setEmail("")
-    setStatus("not_held")
-    setDepartment(DEPARTMENTS[0].value)
-    setPosition("")
-    setNotes("")
-    onClose()
-  }
+    if (!fullName || !email) return;
+    if (isEmployee) {
+      await createEmployee({
+        fullName,
+        email,
+        phone: phone || undefined,
+        department,
+        position: position ? position : null,
+        notes,
+        birthdayAt: birthday ? birthday.startOf("day").toISOString() : null
+      }).unwrap();
+    } else {
+      await createCandidate({
+        fullName,
+        email,
+        phone: phone || undefined,
+        status,
+        department,
+        position: position || undefined,
+        notes
+      }).unwrap();
+    }
+    setFullName("");
+    setPhone("");
+    setEmail("");
+    setStatus("not_held");
+    setDepartment(DEPARTMENTS[0].value);
+    setPosition("");
+    setNotes("");
+    setBirthday(null);
+    onClose();
+  };
+
+  const busy = isEmployee ? isCreatingEmployee : isCreatingCandidate;
 
   return (
     <Dialog
@@ -80,10 +104,7 @@ export default function CandidateDialog({ open, onClose }: Props) {
       onClose={onClose}
       keepMounted
       sx={{
-        "& .MuiDialog-container": {
-          justifyContent: "flex-end",
-          alignItems: "stretch",
-        },
+        "& .MuiDialog-container": { justifyContent: "flex-end", alignItems: "stretch" }
       }}
       PaperProps={{
         sx: {
@@ -95,48 +116,30 @@ export default function CandidateDialog({ open, onClose }: Props) {
           borderRadius: 0,
           boxShadow: (t) => t.shadows[8],
           display: "flex",
-          flexDirection: "column",
-        },
+          flexDirection: "column"
+        }
       }}
     >
-      <DialogTitle>Добавить кандидата</DialogTitle>
+      <DialogTitle>{isEmployee ? "Добавить сотрудника" : "Добавить кандидата"}</DialogTitle>
       <DialogContent dividers sx={{ flex: 1, overflowY: "auto" }}>
         <Box display="grid" gap={2}>
-          <TextField
-            label="Полное имя"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            autoFocus
-          />
-          <TextField
-            label="Телефон"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+380XXXXXXXXX"
-          />
-          <TextField
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-          />
+          <TextField label="Полное имя" value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
+          <TextField label="Телефон" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380XXXXXXXXX" />
+          <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
 
-          <FormControl>
-            <InputLabel id="status-label">Статус</InputLabel>
-            <Select
-              labelId="status-label"
-              value={status}
-              label="Статус"
-              onChange={(e) => setStatus(e.target.value as string)}
-            >
-              {HR_STATUS_OPTIONS.map((o) => (
-                <MenuItem key={o.value} value={o.value}>
-                  <Dot color={o.dot} />
-                  {o.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {!isEmployee && (
+            <FormControl>
+              <InputLabel id="status-label">Статус</InputLabel>
+              <Select labelId="status-label" value={status} label="Статус" onChange={(e) => setStatus(e.target.value as string)}>
+                {HR_STATUS_OPTIONS.map((o) => (
+                  <MenuItem key={o.value} value={o.value}>
+                    <Dot color={o.dot} />
+                    {o.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           <FormControl>
             <InputLabel id="dept-label">Отдел</InputLabel>
@@ -145,8 +148,8 @@ export default function CandidateDialog({ open, onClose }: Props) {
               value={department}
               label="Отдел"
               onChange={(e) => {
-                setDepartment(e.target.value as any)
-                setPosition("")
+                setDepartment(e.target.value as any);
+                setPosition("");
               }}
             >
               {DEPARTMENTS.map((d) => (
@@ -178,25 +181,27 @@ export default function CandidateDialog({ open, onClose }: Props) {
             </Select>
           </FormControl>
 
-          <TextField
-            label="Заметки"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            multiline
-            rows={3}
-          />
+          {isEmployee && (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Дата рождения"
+                value={birthday}
+                onChange={(v) => setBirthday(v)}
+                format="DD.MM.YYYY"
+                slotProps={{ textField: { size: "small" } as any }}
+              />
+            </LocalizationProvider>
+          )}
+
+          <TextField label="Заметки" value={notes} onChange={(e) => setNotes(e.target.value)} multiline rows={3} />
         </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading || !fullName || !email}
-          variant="contained"
-        >
+        <Button onClick={handleSubmit} disabled={busy || !fullName || !email} variant="contained">
           Сохранить
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

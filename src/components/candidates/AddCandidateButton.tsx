@@ -9,15 +9,21 @@ const ripple = keyframes`
   100% { transform: scale(2.8); opacity: 0; }
 `;
 
-export default function AddCandidateButton() {
+type Props = {
+  mode?: "candidate" | "employee";
+  title?: string;
+};
+
+export default function AddCandidateButton({ mode = "candidate", title }: Props) {
   const [open, setOpen] = useState(false);
+  const label = title ?? (mode === "employee" ? "Добавить сотрудника" : "Добавить кандидата");
 
   return (
     <>
-      <Tooltip title="Добавить кандидата" placement="left">
+      <Tooltip title={label} placement="left">
         <Zoom in>
           <Button
-            aria-label="Добавить кандидата"
+            aria-label={label}
             onClick={() => setOpen(true)}
             sx={{
               position: "fixed",
@@ -31,17 +37,12 @@ export default function AddCandidateButton() {
               zIndex: (t) => t.zIndex.drawer + 1,
               boxShadow: 6,
               color: "#fff",
-              bgcolor: "rgba(33, 150, 243, 0.65)", // полупрозрачный синий
+              bgcolor: "rgba(33, 150, 243, 0.65)",
               border: "1px solid rgba(255,255,255,0.28)",
               backdropFilter: "blur(6px)",
               transition: "background-color .2s ease, box-shadow .2s ease, transform .1s ease",
-              "&:hover": {
-                bgcolor: "rgba(33, 150, 243, 0.85)",
-                boxShadow: 10,
-              },
-              "&:active": {
-                transform: "translateY(1px)",
-              },
+              "&:hover": { bgcolor: "rgba(33, 150, 243, 0.85)", boxShadow: 10 },
+              "&:active": { transform: "translateY(1px)" },
               "&::after": {
                 content: '""',
                 position: "absolute",
@@ -61,7 +62,7 @@ export default function AddCandidateButton() {
         </Zoom>
       </Tooltip>
 
-      <CandidateDialog open={open} onClose={() => setOpen(false)} />
+      <CandidateDialog open={open} onClose={() => setOpen(false)} mode={mode} />
     </>
   );
 }

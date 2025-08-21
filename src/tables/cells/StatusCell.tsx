@@ -30,26 +30,10 @@ const CompactSelect = styled(Select)(({ theme }) => ({
 }));
 
 function Dot({ color }: { color: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: color,
-      }}
-    />
-  );
+  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color }} />;
 }
 
-export default function StatusCell({
-  row,
-  value,
-  options,
-  onChange,
-  widthPx,
-}: Props) {
+export default function StatusCell({ row, value, options, onChange, widthPx }: Props) {
   const current = useMemo(() => {
     const v = value ?? row.interviews?.[0]?.status ?? "not_held";
     return options.find((o) => o.value === v) ?? options[0];
@@ -58,42 +42,36 @@ export default function StatusCell({
   const [patchCandidate] = usePatchCandidateMutation();
 
   const handleChange = async (next: InterviewStatus) => {
-  if (onChange) {
-    onChange(next, row);
-    return;
-  }
-
-  const list = row.interviews?.length ? [...row.interviews] : [];
-  const nowIso = new Date().toISOString();
-
-  if (list.length === 0) {
-    list.unshift({
-      status: next,
-      scheduledAt: next === "success" || next === "declined" ? nowIso : undefined,
-    } as any);
-  } else {
-    const head = { ...list[0], status: next };
-    if (next === "success" || next === "declined") head.scheduledAt = nowIso;
-    list[0] = head;
-  }
-
-  const map: Record<InterviewStatus, keyof Candidate | null> = {
-    not_held: null,
-    reserve:  null,         
-    success:  "acceptedAt",
-    declined: "declinedAt",
-    canceled: "canceledAt",
-  };
-
-  const body: any = { interviews: list };
-
-  const field = map[next];
-  if (field) {
-    body[field] = nowIso;
+    if (onChange) {
+      onChange(next, row);
+      return;
     }
-
-  await patchCandidate({ id: row._id, body }).unwrap();
-};
+    const list = row.interviews?.length ? [...row.interviews] : [];
+    const nowIso = new Date().toISOString();
+    if (list.length === 0) {
+      list.unshift({
+        status: next,
+        scheduledAt: next === "success" || next === "declined" ? nowIso : undefined,
+      } as any);
+    } else {
+      const head = { ...list[0], status: next };
+      if (next === "success" || next === "declined") head.scheduledAt = nowIso;
+      list[0] = head;
+    }
+    const map: Record<InterviewStatus, keyof Candidate | null> = {
+      not_held: null,
+      reserve: "polygraphAt",
+      success: "acceptedAt",
+      declined: "declinedAt",
+      canceled: "canceledAt",
+    };
+    const body: any = { interviews: list, status: next };
+    const field = map[next];
+    if (field) {
+      body[field] = nowIso;
+    }
+    await patchCandidate({ id: row._id, body }).unwrap();
+  };
 
   const width = widthPx ?? STATUS_WIDTH_DEFAULT;
 
@@ -109,17 +87,8 @@ export default function StatusCell({
           color: current.fg,
           "& .MuiSvgIcon-root": { color: current.fg },
           "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(0,0,0,0.12)" },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(0,0,0,0.18)",
-            borderWidth: 1,
-          },
-          "& .MuiSelect-select": {
-            width,
-            boxSizing: "border-box",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(0,0,0,0.18)", borderWidth: 1 },
+          "& .MuiSelect-select": { width, boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
         }}
         MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
       >

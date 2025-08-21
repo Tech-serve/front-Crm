@@ -1,4 +1,3 @@
-// frontend/src/api/candidatesApi.ts
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
@@ -37,10 +36,31 @@ type MetricsResp = {
   firstTouches: { month: string; created: number }[];
 };
 
+// ---- Snapshots
+type SnapshotsResp = {
+  items: Array<{
+    month: string; // YYYY-MM
+    not_held: number;
+    reserve: number;
+    success: number;
+    declined: number;
+    canceled: number;
+  }>;
+};
+
+type FreezeResp = {
+  month: string; // YYYY-MM
+  not_held: number;
+  reserve: number;
+  success: number;
+  declined: number;
+  canceled: number;
+};
+
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getCandidates: build.query<Paginated<CandidateWithInterviews>, { page?: number; pageSize?: number }>({
-      query: ({ page = 1, pageSize = 20 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
+      query: ({ page = 1, pageSize = 1000 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
       providesTags: (res) =>
         res?.items
           ? [...res.items.map((c) => ({ type: "Candidates" as const, id: c._id })), { type: "Candidates" as const, id: "LIST" }]
@@ -63,6 +83,16 @@ export const candidatesApi = baseApi.injectEndpoints({
         return `/candidates/metrics${qs ? `?${qs}` : ""}`;
       },
     }),
+    getCandidateSnapshots: build.query<SnapshotsResp, { from: string; to: string }>({
+      query: ({ from, to }) => ({ url: "/candidates/snapshots", params: { from, to } }),
+    }),
+    freezeCandidateSnapshot: build.mutation<FreezeResp, { month?: string } | void>({
+      query: (body) => ({
+        url: "/candidates/snapshots/freeze",
+        method: "POST",
+        params: body?.month ? { month: body.month } : undefined,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -72,4 +102,6 @@ export const {
   useCreateCandidateMutation,
   usePatchCandidateMutation,
   useGetCandidateMetricsQuery,
+  useGetCandidateSnapshotsQuery,
+  useFreezeCandidateSnapshotMutation,
 } = candidatesApi;

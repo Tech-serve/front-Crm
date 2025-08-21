@@ -4,6 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useGetEmployeesQuery, usePatchEmployeeMutation } from "src/api/employeesApi";
 import employeesColumns from "src/tables/employeesTable";
 import type { Employee } from "src/types/employee";
+import AddCandidateButton from "src/components/candidates/AddCandidateButton";
 
 export default function EmployeesPage() {
   const { data, isLoading, isError, error } = useGetEmployeesQuery({ page: 1, pageSize: 20 });
@@ -46,6 +47,8 @@ export default function EmployeesPage() {
           sx={{ height: "88%" }}
         />
       </Box>
+
+      <AddCandidateButton mode="employee" title="Добавить сотрудника" />
     </Box>
   );
 }

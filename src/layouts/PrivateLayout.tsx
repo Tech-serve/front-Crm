@@ -21,16 +21,13 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
       <SideNav />
       <AppHeader drawerWidth={DRAWER_WIDTH} />
       <Toolbar sx={{ minHeight: 56, flexShrink: 0 }} />
-
-      {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 2 }}>
-        <AddCandidateButton />
-      </Box> */}
       <Box
         component="main"
         sx={{
           ml: `${DRAWER_WIDTH}px`,
           py: 2,
           pr: 2,
+          pl: { xs: 0, md: `${DRAWER_WIDTH}px` },
           flex: 1,                       
           display: "flex",
           flexDirection: "column",

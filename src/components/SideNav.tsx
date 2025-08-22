@@ -1,23 +1,27 @@
 // src/layouts/SideNav.tsx
-import { styled } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
-import { NavLink, Link as RouterLink } from "react-router-dom";
+import Paper from "@mui/material/Paper";
+import BottomNavigation from "@mui/material/BottomNavigation";
+import BottomNavigationAction from "@mui/material/BottomNavigationAction";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { NavLink, Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import DashboardRoundedIcon   from "@mui/icons-material/DashboardRounded";
 import PeopleRoundedIcon      from "@mui/icons-material/PeopleRounded";
 import ListAltRoundedIcon     from "@mui/icons-material/ListAltRounded";
-import ChecklistRoundedIcon   from "@mui/icons-material/ChecklistRounded"; // ✅ ИКОНКА ДЛЯ ЧЕКЛИСТА
-// import ChecklistPage from "src/pages/ChecklistPage"; // ❌ УБРАТЬ — страница не должна быть иконкой
+import ChecklistRoundedIcon   from "@mui/icons-material/ChecklistRounded";
 
 import logoUrl from "src/assets/logo.png";
 
 export const DRAWER_WIDTH = 88;
 
+// === настройка цветов/внешнего вида ===
 const ui = {
   railBg: "#1f334b",
   railBorder: "rgba(255,255,255,0.08)",
@@ -92,12 +96,72 @@ const Label = styled(ListItemText)({
   "& .MuiListItemText-primary": { fontSize: 11, color: "inherit", opacity: 0.95 },
 });
 
+// ——— мобильный таб-бар ———
+function MobileBottomNav() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const ITEMS = [
+    { to: "/",                 icon: <DashboardRoundedIcon />,  label: "Process"    },
+    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,     label: "Candidates" },
+    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,    label: "Employees"  },
+    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,   label: "Checklist"  },
+  ];
+
+  const value = (() => {
+    const i = ITEMS.findIndex(i => (
+      location.pathname === i.to || location.pathname.startsWith(i.to)
+    ));
+    return i === -1 ? 0 : i;
+  })();
+
+  return (
+    <>
+      <Paper
+        elevation={10}
+        sx={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: (t) => t.zIndex.appBar,
+        }}
+      >
+        <BottomNavigation
+          showLabels
+          value={value}
+          onChange={(_, newValue) => navigate(ITEMS[newValue].to)}
+        >
+          {ITEMS.map((it) => (
+            <BottomNavigationAction key={it.to} label={it.label} icon={it.icon} />
+          ))}
+        </BottomNavigation>
+      </Paper>
+
+      {/* Небольшой отступ, если родитель не добавил pb — чтобы контент не прятался под панель */}
+      <Box sx={{ height: 64, display: { xs: "block", md: "none" } }} />
+    </>
+  );
+}
+
 export default function SideNav() {
+  // Порог переключения (по умолчанию < md == 900px)
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  // Если хочешь раньше — поменяй на "lg" или конкретный px:
+  // const isMobile = useMediaQuery("(max-width: 840px)");
+
+  if (isMobile) {
+    // На мобильных: показываем нижнюю навигацию
+    return <MobileBottomNav />;
+  }
+
+  // На ≥ md: обычный левый сайдбар
   const items = [
-    { to: "/",                icon: <DashboardRoundedIcon />, label: "Process"    },
-    { to: "/hr/candidates",   icon: <PeopleRoundedIcon />,    label: "Candidates" },
-    { to: "/hr/employeesPage",icon: <ListAltRoundedIcon />,   label: "Employees"  },
-    { to: "/hr/checklist",    icon: <ChecklistRoundedIcon/>,  label: "Checklist"  }, // ✅ ПРАВИЛЬНО
+    { to: "/",                 icon: <DashboardRoundedIcon />, label: "Process"    },
+    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,    label: "Candidates" },
+    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,   label: "Employees"  },
+    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,  label: "Checklist"  },
   ];
 
   return (

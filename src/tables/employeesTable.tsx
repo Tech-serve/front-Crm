@@ -2,6 +2,8 @@ import type { GridColDef, GridPreProcessEditCellProps } from "@mui/x-data-grid";
 import DepartmentCell from "src/tables/cells/DepartmentCell";
 import PositionCell from "src/tables/cells/PositionCell";
 import EmployeeBirthdayCell from "src/tables/cells/EmployeeBirthdayCell";
+import EmployeeHiredAtCell from "./cells/EmployeeHiredAtCell";
+import EmployeeTerminatedCell from "./cells/EmployeeTerminatedCell";
 
 const emailPreprocess = (params: GridPreProcessEditCellProps) => ({
   ...params.props,
@@ -36,17 +38,31 @@ const employeesColumns: GridColDef[] = [
     renderCell: (p) => <PositionCell row={p.row as any} value={p.value as any} patchKind="employee" />,
   },
 
-  { field: "hiredAtText", headerName: "Принят", width: 140, align: "right", headerAlign: "right" },
-   {
-  field: "birthdayAt",
-  headerName: "ДР",
-  width: 160,
-  sortable: false,
-  align: "center",
-  headerAlign: "center",
-  cellClassName: "dg-center dg-vcenter",
-  renderCell: (p) => <EmployeeBirthdayCell row={p.row as any} />,
-},
+  {
+    field: "hiredAt",
+    headerName: "Принят",
+    width: 220,
+    sortable: false,
+    renderCell: (p) => <EmployeeHiredAtCell row={p.row as any} />,
+  },
+
+  {
+    field: "terminatedAt",
+    headerName: "Уволен",
+    width: 220,
+    sortable: false,
+    renderCell: (p) => <EmployeeTerminatedCell row={p.row as any} />,
+  },
+  {
+    field: "birthdayAt",
+    headerName: "ДР",
+    width: 160,
+    sortable: false,
+    align: "center",
+    headerAlign: "center",
+    cellClassName: "dg-center dg-vcenter",
+    renderCell: (p) => <EmployeeBirthdayCell row={p.row as any} />,
+  },
   { field: "notes", headerName: "Заметки", flex: 1, minWidth: 220, editable: true },
 ];
 

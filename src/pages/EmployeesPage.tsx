@@ -11,14 +11,9 @@ export default function EmployeesPage() {
   const [patchEmployee] = usePatchEmployeeMutation();
 
   const rows = useMemo(
-    () =>
-      (data?.items ?? []).map((e) => ({
-        ...e,
-        id: e._id,
-        hiredAtText: new Date(e.hiredAt).toLocaleDateString("uk-UA"),
-      })),
-    [data]
-  );
+  () => (data?.items ?? []).map((e) => ({ ...e, id: e._id })), 
+  [data]
+);
 
   return (
     <Box p={2} display="flex" flexDirection="column" height="100%">
@@ -67,21 +62,19 @@ export default function EmployeesPage() {
       overflow: "visible",
     },
 
-    // Вертикаль
     "& .dg-vcenter": {
-      py: 0,                       // убираем вертикальные паддинги у клетки
+      py: 0,                   
       alignItems: "center !important",
       display: "flex",
     },
     "& .dg-vcenter .MuiDataGrid-cellContent": {
       display: "flex",
       alignItems: "center",
-      height: "100%",              // растягиваем обёртку на всю высоту строки
+      height: "100%",             
     },
 
-    // Сам TextField пикера — без внешних отступов и фикс. высота
     "& .dg-vcenter .MuiFormControl-root": { margin: 0 },
-    "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" }, // small ≈36–40
+    "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" },
     "& .dg-vcenter input": { textAlign: "center", paddingTop: 0, paddingBottom: 0 },
   }}
         />

@@ -10,9 +10,10 @@ type CreateEmployeeBody = {
   notes?: string;
   birthdayAt?: string | null;
   hiredAt?: string | null;
+  terminatedAt?: string | null;
 };
 
-type UpdateEmployeeBody = Partial<Pick<Employee, "fullName" | "email" | "phone" | "department" | "position" | "notes" | "hiredAt" | "birthdayAt">>;
+type UpdateEmployeeBody = Partial<Pick<Employee, "fullName" | "email" | "phone" | "department" | "position" | "notes" | "hiredAt" | "birthdayAt" | "terminatedAt">>;
 
 export const employeesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({

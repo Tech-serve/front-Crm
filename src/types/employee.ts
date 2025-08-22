@@ -9,6 +9,7 @@ export interface Employee {
   notes?: string;
   hiredAt: string;
   birthdayAt?: string | null;
+  terminatedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

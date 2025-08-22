@@ -2,7 +2,7 @@ name: Deploy frontend
 
 on:
   push:
-    branches: [ main ]      # если у тебя другая ветка — замени
+    branches: [ main ]
   workflow_dispatch: {}
 
 concurrency:
@@ -14,32 +14,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: SSH deploy to server
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         env:
           APP_DIR:  ${{ secrets.APP_DIR }}            # /opt/crm
           BRANCH:   ${{ secrets.FRONTEND_BRANCH }}    # main (или твоя)
+          REPO_SSH: ${{ secrets.FRONTEND_REPO_URL }}  # git@github.com:Tech-serve/front-Crm.git
         with:
           host:     ${{ secrets.SSH_HOST }}           # 91.215.87.166
           username: ${{ secrets.SSH_USER }}           # root
-          key:      ${{ secrets.SSH_KEY_CRM_CI }}     # приватный ключ, что добавляли
-          port:     ${{ secrets.SSH_PORT || '22' }}
-          script_stop: true
+          key:      ${{ secrets.SSH_KEY_CRM_CI }}     # приватный ключ crm_ci
+          # port:   22                                # можно опустить — по умолчанию 22
           script: |
             set -euo pipefail
             APP_DIR="${APP_DIR:-/opt/crm}"
             BRANCH="${BRANCH:-main}"
+            REPO_SSH="${REPO_SSH:-git@github.com:Tech-serve/front-Crm.git}"
 
-            echo "==> sync repo"
-            cd "$APP_DIR/frontend"
-            git fetch origin "$BRANCH"
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
+
+            if [ ! -d frontend/.git ]; then
+              rm -rf frontend
+              git clone --depth 1 "$REPO_SSH" frontend
+            fi
+
+            cd frontend
+            git fetch --depth 1 origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
 
-            echo "==> build & restart web"
             cd "$APP_DIR"
             docker compose build web
             docker compose up -d web
-
-            echo "==> healthcheck"
             docker compose exec -T web wget -qO- http://localhost/health >/dev/null
-
             echo "✅ Frontend deployed"

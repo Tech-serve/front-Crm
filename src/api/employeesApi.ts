@@ -13,7 +13,12 @@ type CreateEmployeeBody = {
   terminatedAt?: string | null;
 };
 
-type UpdateEmployeeBody = Partial<Pick<Employee, "fullName" | "email" | "phone" | "department" | "position" | "notes" | "hiredAt" | "birthdayAt" | "terminatedAt">>;
+type UpdateEmployeeBody = Partial<
+  Pick<
+    Employee,
+    "fullName" | "email" | "phone" | "department" | "position" | "notes" | "hiredAt" | "birthdayAt" | "terminatedAt"
+  >
+>;
 
 export const employeesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -30,7 +35,7 @@ export const employeesApi = baseApi.injectEndpoints({
     }),
     patchEmployee: build.mutation<Employee, { id: string; body: UpdateEmployeeBody }>({
       query: ({ id, body }) => ({ url: `/employees/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: "Employees", id }, { type: "Employees", id: "LIST" }],
+      invalidatesTags: (_res, _err, { id }) => [{ type: "Employees", id }], 
     }),
   }),
   overrideExisting: false,

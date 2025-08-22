@@ -58,7 +58,6 @@ type FreezeResp = {
 
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // --- Список кандидатов (с пагинацией)
     getCandidates: build.query<
       Paginated<CandidateWithInterviews>,
       { page?: number; pageSize?: number }
@@ -74,22 +73,16 @@ export const candidatesApi = baseApi.injectEndpoints({
           : [{ type: "Candidates" as const, id: "LIST" }],
     }),
 
-    // --- Создание кандидата
     createCandidate: build.mutation<Candidate, CreateCandidateBody>({
       query: (body) => ({ url: "/candidates", method: "POST", body }),
       invalidatesTags: [{ type: "Candidates", id: "LIST" }],
     }),
 
-    // --- Обновление кандидата (патч)
     patchCandidate: build.mutation<Candidate, { id: string; body: UpdateCandidateBody }>({
       query: ({ id, body }) => ({ url: `/candidates/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: "Candidates", id },
-        { type: "Candidates", id: "LIST" },
-      ],
+      invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }], // ← убран рефетч LIST
     }),
 
-    // --- Метрики (счётчики событий по датам + текущие статусы)
     getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({
       query: (q) => {
         const params = new URLSearchParams();
@@ -100,12 +93,10 @@ export const candidatesApi = baseApi.injectEndpoints({
       },
     }),
 
-    // --- Снепшоты (замороженные срезы по статусам)
     getCandidateSnapshots: build.query<SnapshotsResp, { from: string; to: string }>({
       query: ({ from, to }) => ({ url: "/candidates/snapshots", params: { from, to } }),
     }),
 
-    // --- Заморозка снепшота (обычно прошлый месяц)
     freezeCandidateSnapshot: build.mutation<FreezeResp, { month?: string } | void>({
       query: (body) => ({
         url: "/candidates/snapshots/freeze",

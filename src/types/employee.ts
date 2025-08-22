@@ -1,6 +1,6 @@
 export interface Employee {
   _id: string;
-  candidate: string;
+  candidate?: string;        
   fullName: string;
   email: string;
   phone?: string;
@@ -9,7 +9,7 @@ export interface Employee {
   notes?: string;
   hiredAt: string;
   birthdayAt?: string | null;
-  terminatedAt?: string | null;
+  terminatedAt?: string | null; 
   createdAt?: string;
   updatedAt?: string;
 }

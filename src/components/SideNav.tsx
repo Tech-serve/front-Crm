@@ -1,3 +1,4 @@
+// src/layouts/SideNav.tsx
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
@@ -10,7 +11,8 @@ import { NavLink, Link as RouterLink } from "react-router-dom";
 import DashboardRoundedIcon   from "@mui/icons-material/DashboardRounded";
 import PeopleRoundedIcon      from "@mui/icons-material/PeopleRounded";
 import ListAltRoundedIcon     from "@mui/icons-material/ListAltRounded";
-import InsightsRoundedIcon    from "@mui/icons-material/InsightsRounded";
+import ChecklistRoundedIcon   from "@mui/icons-material/ChecklistRounded"; // ✅ ИКОНКА ДЛЯ ЧЕКЛИСТА
+// import ChecklistPage from "src/pages/ChecklistPage"; // ❌ УБРАТЬ — страница не должна быть иконкой
 
 import logoUrl from "src/assets/logo.png";
 
@@ -92,10 +94,10 @@ const Label = styled(ListItemText)({
 
 export default function SideNav() {
   const items = [
-    { to: "/",                      icon: <DashboardRoundedIcon />, label: "Process"    },
-    { to: "/hr/candidates",         icon: <PeopleRoundedIcon />,    label: "Candidates" },
-    { to: "/hr/employeesPage",   icon: <ListAltRoundedIcon />,   label: "Employees"  }, 
-    { to: "/info",                  icon: <InsightsRoundedIcon />,  label: "Info"       },
+    { to: "/",                icon: <DashboardRoundedIcon />, label: "Process"    },
+    { to: "/hr/candidates",   icon: <PeopleRoundedIcon />,    label: "Candidates" },
+    { to: "/hr/employeesPage",icon: <ListAltRoundedIcon />,   label: "Employees"  },
+    { to: "/hr/checklist",    icon: <ChecklistRoundedIcon/>,  label: "Checklist"  }, // ✅ ПРАВИЛЬНО
   ];
 
   return (

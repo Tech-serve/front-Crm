@@ -5,10 +5,11 @@ import PublicLayout  from "../layouts/PublicLayout";
 
 import LoginPage      from "src/common/LoginPage";
 import CandidatesPage from "src/pages/CandidatesPage";
+import EmployeesPage  from "src/pages/EmployeesPage";
+import Dashboard      from "src/pages/Dashboard";
+import ChecklistPage  from "src/pages/ChecklistPage";
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
-import Dashboard from "src/pages/Dashboard";
-import EmployeesPage from "src/pages/EmployeesPage";
 
 export function AppRoutes() {
   return (
@@ -54,6 +55,19 @@ export function AppRoutes() {
           </RequireRoles>
         }
       />
+
+      <Route
+        path="/hr/checklist"
+        element={
+          <RequireRoles roles={["hr", "head"]}>
+            <PrivateLayout>
+              <ChecklistPage />
+            </PrivateLayout>
+          </RequireRoles>
+        }
+      />
+
+      <Route path="/candidates" element={<Navigate to="/hr/checklist" replace />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

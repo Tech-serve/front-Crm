@@ -1,7 +1,7 @@
+// EmployeeBirthdayCell.tsx
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { TextField } from "@mui/material";
 import { usePatchEmployeeMutation } from "src/api/employeesApi";
 import type { Employee } from "src/types/employee";
 
@@ -18,7 +18,16 @@ export default function EmployeeBirthdayCell({ row }: { row: Employee }) {
           await patch({ id: row._id, body: { birthdayAt: iso ?? null } }).unwrap();
         }}
         format="DD.MM.YYYY"
-        slotProps={{ textField: { size: "small" } as any }}
+        slotProps={{
+          textField: {
+            size: "small",
+            sx: {
+              width: 120,
+              mx: "auto",             
+              "& input": { textAlign: "center" },
+            },
+          } as any,
+        }}
       />
     </LocalizationProvider>
   );

@@ -1,0 +1,45 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [ main ]      # если у тебя другая ветка — замени
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy to server
+        uses: appleboy/ssh-action@v1
+        env:
+          APP_DIR:  ${{ secrets.APP_DIR }}            # /opt/crm
+          BRANCH:   ${{ secrets.FRONTEND_BRANCH }}    # main (или твоя)
+        with:
+          host:     ${{ secrets.SSH_HOST }}           # 91.215.87.166
+          username: ${{ secrets.SSH_USER }}           # root
+          key:      ${{ secrets.SSH_KEY_CRM_CI }}     # приватный ключ, что добавляли
+          port:     ${{ secrets.SSH_PORT || '22' }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_DIR="${APP_DIR:-/opt/crm}"
+            BRANCH="${BRANCH:-main}"
+
+            echo "==> sync repo"
+            cd "$APP_DIR/frontend"
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            echo "==> build & restart web"
+            cd "$APP_DIR"
+            docker compose build web
+            docker compose up -d web
+
+            echo "==> healthcheck"
+            docker compose exec -T web wget -qO- http://localhost/health >/dev/null
+
+            echo "✅ Frontend deployed"

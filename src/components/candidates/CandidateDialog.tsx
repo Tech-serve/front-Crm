@@ -30,10 +30,12 @@ type Props = { open: boolean; onClose: () => void; mode?: "candidate" | "employe
 export default function CandidateDialog({ open, onClose, mode = "candidate" }: Props) {
   const isEmployee = mode === "employee";
 
+  // 👇 по умолчанию — “в процессе”
+  const [status, setStatus] = useState<"not_held" | "reserve" | "success" | "declined" | "canceled">("not_held");
+
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"not_held" | "reserve" | "success" | "declined" | "canceled">("reserve"); // 👈 по умолчанию “в процессе”
   const [department, setDepartment] = useState(DEPARTMENTS[0].value);
   const [position, setPosition] = useState("");
   const [notes, setNotes] = useState("");
@@ -57,24 +59,32 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
       }).unwrap();
     } else {
       const nowISO = new Date().toISOString();
+
       const body: any = {
         fullName,
         email,
         phone: phone || undefined,
-        status,            
+        status,
         department,
         position: position || undefined,
         notes,
       };
-      if (status === "reserve") {
-        body.polygraphAt = nowISO; 
+
+      // если “в процессе” — сразу ставим событие для отображения даты в этой колонке
+      if (status === "not_held") {
+        body.interview = {
+          scheduledAt: nowISO,
+          status: "not_held",
+          source: "crm",
+        };
       }
+
       await createCandidate(body).unwrap();
     }
 
     // reset
     setFullName(""); setPhone(""); setEmail("");
-    setStatus("reserve"); setDepartment(DEPARTMENTS[0].value);
+    setStatus("not_held"); setDepartment(DEPARTMENTS[0].value);
     setPosition(""); setNotes(""); setBirthday(null);
     onClose();
   };
@@ -88,17 +98,12 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
       onClose={onClose}
       keepMounted
       scroll="paper"
-      sx={{
-        "& .MuiDialog-container": {
-          justifyContent: "flex-end",
-          alignItems: "stretch",
-        },
-      }}
+      sx={{ "& .MuiDialog-container": { justifyContent: "flex-end", alignItems: "stretch" } }}
       PaperProps={{
         sx: {
-          width: { xs: "100vw", sm: 480 }, // 👈 фулл-ширина на мобиле
+          width: { xs: "100vw", sm: 480 },
           maxWidth: "none",
-          height: "100dvh",                // 👈 корректная высота на мобиле
+          height: "100dvh",
           maxHeight: "100dvh",
           m: 0,
           borderRadius: 0,
@@ -110,14 +115,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
     >
       <DialogTitle>{isEmployee ? "Добавить сотрудника" : "Добавить кандидата"}</DialogTitle>
 
-      <DialogContent
-        dividers
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          pb: 10, // 👈 место под липкие кнопки
-        }}
-      >
+      <DialogContent dividers sx={{ flex: 1, overflowY: "auto", pb: 10 }}>
         <Box display="grid" gap={2}>
           <TextField label="Полное имя" value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
           <TextField label="Телефон" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380XXXXXXXXX" />
@@ -200,7 +198,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
 
       <DialogActions
         sx={{
-          position: "sticky",    
+          position: "sticky",
           bottom: 0,
           zIndex: 1,
           bgcolor: "background.paper",
@@ -208,7 +206,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
           borderColor: "divider",
           px: 2,
           py: 1.5,
-          pb: "calc(12px + env(safe-area-inset-bottom))", 
+          pb: "calc(12px + env(safe-area-inset-bottom))",
         }}
       >
         <Button onClick={onClose}>Отмена</Button>

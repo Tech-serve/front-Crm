@@ -1,20 +1,31 @@
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
+type Status = Candidate["status"]; // "not_held" | "reserve" | "success" | "declined" | "canceled"
+
 type CreateCandidateBody = {
   fullName: string;
   email: string;
   phone?: string;
-  status?: Candidate["status"];    
-  department?: DepartmentValue;
+  status?: Status;                 // 👈 передаём “not_held” по умолчанию
+  department?: DepartmentValue | string;
   position?: string;
   notes?: string;
-  polygraphAt?: string | null;    
+  interview?: {                    // 👈 для “в процессе” можно сразу слать событие
+    scheduledAt: string;
+    status?: Status;
+    source?: "crm" | "jira";
+  };
+  polygraphAt?: string | null;
+  acceptedAt?: string | null;
+  declinedAt?: string | null;
+  canceledAt?: string | null;
+  polygraphAddress?: string | null;
 };
 
 type UpdateCandidateBody = {
   notes?: string;
-  status?: Candidate["status"];
+  status?: Status;
   meetLink?: string;
   phone?: string;
   department?: DepartmentValue;
@@ -49,7 +60,8 @@ export const candidatesApi = baseApi.injectEndpoints({
       Paginated<CandidateWithInterviews>,
       { page?: number; pageSize?: number }
     >({
-      query: ({ page = 1, pageSize = 1000 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
+      query: ({ page = 1, pageSize = 1000 } = {}) =>
+        `/candidates?page=${page}&pageSize=${pageSize}`,
       providesTags: (res) =>
         res?.items
           ? [

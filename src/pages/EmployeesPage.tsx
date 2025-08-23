@@ -17,45 +17,35 @@ export default function EmployeesPage() {
 
   return (
     <Box
+      component="main"
       sx={{
+        pt: { xs: 0, md: 2 },
+        px: { xs: 1.5, md: 2 },
+        pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 2 },
+        height: "100dvh",
         display: "flex",
         flexDirection: "column",
-        height: "100%",
         minHeight: 0,
-
-        px: { xs: 1, md: 2 },
-        pt: { xs: 0, md: 0 },
-        pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 2 },
-
-        gap: { xs: 1, md: 2 },
+        boxSizing: "border-box",
       }}
     >
-      <Typography
-        variant="h6"
-        sx={{ mt: 0, mb: { xs: 1, md: 2 }, lineHeight: 1.2 }}
-      >
+      <Typography variant="h5" sx={{ mb: { xs: 1, md: 2 } }}>
         Сотрудники
       </Typography>
 
       {isError && (
-        <Typography color="error">
+        <Typography color="error" sx={{ mb: 1 }}>
           Ошибка: {String((error as any)?.data || error)}
         </Typography>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0, width: "100%", overflow: "hidden" }}>
+      <Box sx={{ flex: 1, minHeight: 0, width: "100%" }}>
         <DataGrid
           rows={rows}
           columns={employeesColumns}
           loading={isLoading}
           getRowId={(r) => (r as Employee)._id}
           disableRowSelectionOnClick
-
-          density="compact"
-          rowHeight={44}
-          columnHeaderHeight={44}
-          hideFooterSelectedRowCount
-
           processRowUpdate={async (newRow: GridRowModel, oldRow: GridRowModel) => {
             const n = newRow as Employee;
             const o = oldRow as Employee;
@@ -79,28 +69,16 @@ export default function EmployeesPage() {
             return { ...n };
           }}
           onProcessRowUpdateError={(e) => console.error(e)}
-
           sx={{
             height: "100%",
             width: "100%",
+            border: 0,
             "& .MuiDataGrid-columnHeaders": {
-              minHeight: 44,
-              maxHeight: 44,
-            },
-            "& .MuiDataGrid-columnHeader": {
-              px: 1,
-            },
-            "& .MuiDataGrid-cell": {
-              py: 0.75,
-              px: 1,
+              borderRadius: { xs: 1, md: 2 },
             },
             "& .MuiDataGrid-virtualScroller": {
-              overflowX: "auto",
+              paddingBottom: { xs: 1, md: 0 },
             },
-            "& .MuiDataGrid-footerContainer": {
-              pb: { xs: "72px", md: 0 },
-            },
-            // выравнивания, что были у тебя — оставил
             "& .dg-center": { justifyContent: "center !important", px: 0 },
             "& .dg-center .MuiDataGrid-cellContent": { display: "flex", justifyContent: "center", width: "100%", overflow: "visible" },
             "& .dg-vcenter": { py: 0, alignItems: "center !important", display: "flex" },
@@ -108,7 +86,6 @@ export default function EmployeesPage() {
             "& .dg-vcenter .MuiFormControl-root": { margin: 0 },
             "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" },
             "& .dg-vcenter input": { textAlign: "center", paddingTop: 0, paddingBottom: 0 },
-            border: 0,
           }}
         />
       </Box>

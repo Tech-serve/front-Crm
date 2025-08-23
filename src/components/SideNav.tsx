@@ -1,4 +1,3 @@
-// src/layouts/SideNav.tsx
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
@@ -21,7 +20,6 @@ import logoUrl from "src/assets/logo.png";
 
 export const DRAWER_WIDTH = 88;
 
-// === настройка цветов/внешнего вида ===
 const ui = {
   railBg: "#1f334b",
   railBorder: "rgba(255,255,255,0.08)",
@@ -96,7 +94,6 @@ const Label = styled(ListItemText)({
   "& .MuiListItemText-primary": { fontSize: 11, color: "inherit", opacity: 0.95 },
 });
 
-// ——— мобильный таб-бар ———
 function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,10 +106,17 @@ function MobileBottomNav() {
   ];
 
   const value = (() => {
-    const i = ITEMS.findIndex(i => (
-      location.pathname === i.to || location.pathname.startsWith(i.to)
-    ));
-    return i === -1 ? 0 : i;
+    let bestIdx = 0;
+    let bestLen = -1;
+    ITEMS.forEach((it, idx) => {
+      if (location.pathname === it.to || location.pathname.startsWith(it.to)) {
+        if (it.to.length > bestLen) {
+          bestIdx = idx;
+          bestLen = it.to.length;
+        }
+      }
+    });
+    return bestIdx;
   })();
 
   return (
@@ -124,54 +128,43 @@ function MobileBottomNav() {
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: (t) => t.zIndex.appBar,
+          zIndex: (t) => t.zIndex.appBar + 1, 
         }}
       >
         <BottomNavigation
-          showLabels
+          showLabels={false}                 
           value={value}
           onChange={(_, newValue) => navigate(ITEMS[newValue].to)}
           sx={{
-            "& .Mui-selected": {
-              color: ui.activeText,
+            bgcolor: "#0f1b2a",
+            "& .MuiBottomNavigationAction-root": {
+              color: "rgba(255,255,255,0.7)",
+              minWidth: 0,
             },
-            "& .MuiBottomNavigationAction-root.Mui-selected": {
-              background: ui.activeBg,
-              boxShadow: "0 4px 12px rgba(15,35,64,0.35)",
-              borderRadius: "12px",
-              margin: "4px",
+            "& .Mui-selected, & .Mui-selected .MuiSvgIcon-root": {
+              color: "primary.main",
             },
           }}
         >
-          {ITEMS.map((it, i) => (
-            <BottomNavigationAction
-              key={it.to}
-              label={it.label}
-              icon={it.icon}
-            />
+          {ITEMS.map((it) => (
+            <BottomNavigationAction key={it.to} icon={it.icon} />
           ))}
         </BottomNavigation>
       </Paper>
 
-      {/* Небольшой отступ, если родитель не добавил pb — чтобы контент не прятался под панель */}
       <Box sx={{ height: 64, display: { xs: "block", md: "none" } }} />
     </>
   );
 }
 
 export default function SideNav() {
-  // Порог переключения (по умолчанию < md == 900px)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  // Если хочешь раньше — поменяй на "lg" или конкретный px:
-  // const isMobile = useMediaQuery("(max-width: 840px)");
 
   if (isMobile) {
-    // На мобильных: показываем нижнюю навигацию
     return <MobileBottomNav />;
   }
 
-  // На ≥ md: обычный левый сайдбар
   const items = [
     { to: "/",                 icon: <DashboardRoundedIcon />, label: "Process"    },
     { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,    label: "Candidates" },

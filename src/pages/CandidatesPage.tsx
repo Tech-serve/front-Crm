@@ -1,4 +1,3 @@
-// frontend/src/pages/CandidatesPage.tsx
 import { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
@@ -47,7 +46,7 @@ export default function CandidatesPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, px: { xs: 0, md: 0 } }}>
       <Typography variant="h5" mb={2}>
         Кандидаты
       </Typography>
@@ -80,9 +79,10 @@ export default function CandidatesPage() {
             return newRow;
           }}
           onProcessRowUpdateError={(e) => console.error(e)}
-          sx={{ height: "88%" }}
+          sx={{ height: "100%", width: "100%" }}     
         />
       </Box>
+
       <AddCandidateButton title="Добавить кандидата" />
     </Box>
   );

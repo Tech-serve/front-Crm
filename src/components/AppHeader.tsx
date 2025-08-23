@@ -26,9 +26,13 @@ const HeaderBar = styled(AppBar)<{ drawerwidth: number }>(({ theme, drawerwidth 
   borderBottom: "1px solid rgba(255,255,255,0.08)",
   width: `calc(100% - ${drawerwidth}px)`,
   marginLeft: drawerwidth,
+  [theme.breakpoints.down("md")]: {
+    width: "100%",
+    marginLeft: 0,
+  },
 }));
 
-const SearchWrap = styled("div")({
+const SearchWrap = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   gap: 8,
@@ -38,7 +42,11 @@ const SearchWrap = styled("div")({
   minWidth: 280,
   transition: "background .2s ease",
   "&:focus-within": { background: "rgba(255,255,255,0.18)" },
-});
+  [theme.breakpoints.down("sm")]: {
+    minWidth: 0,
+    width: "100%",
+  },
+}));
 
 const SearchInput = styled(InputBase)({
   color: "#fff",
@@ -52,19 +60,22 @@ export default function AppHeader({ drawerWidth }: Props) {
 
   return (
     <HeaderBar position="fixed" drawerwidth={drawerWidth}>
-      <Toolbar sx={{ minHeight: 56, px: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, mr: 3 }}>
+      <Toolbar sx={{ minHeight: 56, px: { xs: 1, sm: 2 } }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, mr: { xs: 1, sm: 3 } }}
+        >
           CRM
         </Typography>
 
-        <Box sx={{ flex: 1, maxWidth: 720 }}>
+        <Box sx={{ flex: 1, minWidth: 0, maxWidth: { xs: "100%", sm: 720 } }}>
           <SearchWrap>
             <SearchRoundedIcon fontSize="small" />
             <SearchInput placeholder="Поиск (Ctrl + K)" />
           </SearchWrap>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ml: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1.5 }, ml: { xs: 1, sm: 2 } }}>
           <Tooltip title="Создать">
             <IconButton
               size="small"

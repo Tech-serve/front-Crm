@@ -11,15 +11,15 @@ export default function EmployeesPage() {
   const [patchEmployee] = usePatchEmployeeMutation();
 
   const rows = useMemo(
-  () => (data?.items ?? []).map((e) => ({ ...e, id: e._id })), 
-  [data]
-);
+    () => (data?.items ?? []).map((e) => ({ ...e, id: e._id })),
+    [data]
+  );
 
   return (
-    <Box p={2} display="flex" flexDirection="column" height="100%">
+    <Box p={{ xs: 0, md: 2 }} display="flex" flexDirection="column" height="100%" minHeight={0}>
       <Typography variant="h5" mb={2}>Сотрудники</Typography>
 
-      <Box flex={1}>
+      <Box flex={1} minHeight={0} width="100%">
         <DataGrid
           rows={rows}
           columns={employeesColumns}
@@ -50,33 +50,16 @@ export default function EmployeesPage() {
           }}
           onProcessRowUpdateError={(e) => console.error(e)}
           sx={{
-    // Горизонталь
-    "& .dg-center": {
-      justifyContent: "center !important",
-      px: 0,
-    },
-    "& .dg-center .MuiDataGrid-cellContent": {
-      display: "flex",
-      justifyContent: "center",
-      width: "100%",
-      overflow: "visible",
-    },
-
-    "& .dg-vcenter": {
-      py: 0,                   
-      alignItems: "center !important",
-      display: "flex",
-    },
-    "& .dg-vcenter .MuiDataGrid-cellContent": {
-      display: "flex",
-      alignItems: "center",
-      height: "100%",             
-    },
-
-    "& .dg-vcenter .MuiFormControl-root": { margin: 0 },
-    "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" },
-    "& .dg-vcenter input": { textAlign: "center", paddingTop: 0, paddingBottom: 0 },
-  }}
+            height: "100%",
+            width: "100%",
+            "& .dg-center": { justifyContent: "center !important", px: 0 },
+            "& .dg-center .MuiDataGrid-cellContent": { display: "flex", justifyContent: "center", width: "100%", overflow: "visible" },
+            "& .dg-vcenter": { py: 0, alignItems: "center !important", display: "flex" },
+            "& .dg-vcenter .MuiDataGrid-cellContent": { display: "flex", alignItems: "center", height: "100%" },
+            "& .dg-vcenter .MuiFormControl-root": { margin: 0 },
+            "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" },
+            "& .dg-vcenter input": { textAlign: "center", paddingTop: 0, paddingBottom: 0 },
+          }}
         />
       </Box>
 

@@ -132,7 +132,13 @@ export default function ChecklistPage() {
   ];
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, display: "grid", gap: 2 }}>
+    <Box sx={{
+      px: { xs: 0, md: 3 },      
+      pt: { xs: 0, md: 3 },      
+      pb: { xs: 2, md: 3 },
+      display: "grid",
+      gap: 2,
+    }}>
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>Google Meet (только предстоящие)</Typography>

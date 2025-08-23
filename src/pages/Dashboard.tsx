@@ -199,7 +199,6 @@ export default function Dashboard() {
         </IconButton>
       </Box>
 
-      {/* --- Плашка: Статус на период (по событиям месяца) --- */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
           <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
@@ -234,7 +233,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* --- Снимок статусов на конец месяца (stacked) --- */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
           <Typography variant="subtitle1" mb={2}>Снимок статусов на конец месяца</Typography>
@@ -260,7 +258,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* --- События по месяцам --- */}
       <Card>
         <CardContent>
           <Typography variant="subtitle1" mb={2}>События по месяцам</Typography>
@@ -279,9 +276,6 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-            Это именно счётчики событий по датам из карточек кандидатов.
-          </Typography>
         </CardContent>
       </Card>
     </Box>

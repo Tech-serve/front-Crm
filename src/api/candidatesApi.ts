@@ -5,10 +5,11 @@ type CreateCandidateBody = {
   fullName: string;
   email: string;
   phone?: string;
-  status?: string;
-  department?: string;
+  status?: Candidate["status"];    
+  department?: DepartmentValue;
   position?: string;
   notes?: string;
+  polygraphAt?: string | null;    
 };
 
 type UpdateCandidateBody = {
@@ -37,24 +38,10 @@ type MetricsResp = {
 };
 
 type SnapshotsResp = {
-  items: Array<{
-    month: string; // YYYY-MM
-    not_held: number;
-    reserve: number;
-    success: number;
-    declined: number;
-    canceled: number;
-  }>;
+  items: Array<{ month: string; not_held: number; reserve: number; success: number; declined: number; canceled: number }>;
 };
 
-type FreezeResp = {
-  month: string; // YYYY-MM
-  not_held: number;
-  reserve: number;
-  success: number;
-  declined: number;
-  canceled: number;
-};
+type FreezeResp = { month: string; not_held: number; reserve: number; success: number; declined: number; canceled: number };
 
 export const candidatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -62,8 +49,7 @@ export const candidatesApi = baseApi.injectEndpoints({
       Paginated<CandidateWithInterviews>,
       { page?: number; pageSize?: number }
     >({
-      query: ({ page = 1, pageSize = 1000 } = {}) =>
-        `/candidates?page=${page}&pageSize=${pageSize}`,
+      query: ({ page = 1, pageSize = 1000 } = {}) => `/candidates?page=${page}&pageSize=${pageSize}`,
       providesTags: (res) =>
         res?.items
           ? [
@@ -80,7 +66,7 @@ export const candidatesApi = baseApi.injectEndpoints({
 
     patchCandidate: build.mutation<Candidate, { id: string; body: UpdateCandidateBody }>({
       query: ({ id, body }) => ({ url: `/candidates/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }], // ← убран рефетч LIST
+      invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }],
     }),
 
     getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({

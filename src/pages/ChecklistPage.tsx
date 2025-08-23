@@ -38,7 +38,6 @@ export default function ChecklistPage() {
       const fullName = c.fullName ?? "";
       const cid = String(c._id ?? "");
 
-      // ---------- MEET: только предстоящие, по одному на кандидата (ближайший) ----------
       const ivs: Interview[] = Array.isArray(c.interviews) ? (c.interviews as any) : [];
       let chosenMeet: Interview | undefined;
       let chosenTs = Number.POSITIVE_INFINITY;
@@ -65,7 +64,6 @@ export default function ChecklistPage() {
         });
       }
 
-      // ---------- POLYGRAPH: как было — только текущие ----------
       const isCurrentPoly = c.status === "reserve";
       const polyWhen = isCurrentPoly && c.polygraphAt ? String(c.polygraphAt) : null;
       const polyAddr = isCurrentPoly ? ((c as any).polygraphAddress ?? null) : null;
@@ -82,14 +80,12 @@ export default function ChecklistPage() {
       }
     }
 
-    // сортируем по времени
     meets.sort((a, b) => byISO(a.whenISO, b.whenISO));
     polys.sort((a, b) => byISO(a.whenISO, b.whenISO));
 
     return { meetRows: meets, polyRows: polys };
   }, [candidates]);
 
-  // Колонки (мягкие типы, чтобы не ловить TS-ошибки на версиях MUI)
   const meetCols: Array<GridColDef<ChecklistRow>> = [
     { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 180 },
     {

@@ -1,17 +1,7 @@
 import { useState, forwardRef, type Ref, type ReactElement } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Slide,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Button, Slide, Box, FormControl, InputLabel, Select, MenuItem
 } from "@mui/material";
 import type { SlideProps } from "@mui/material/Slide";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -32,16 +22,7 @@ const Transition = forwardRef(function Transition(
 });
 
 const Dot = ({ color }: { color: string }) => (
-  <span
-    style={{
-      display: "inline-block",
-      width: 8,
-      height: 8,
-      borderRadius: "50%",
-      background: color,
-      marginRight: 8
-    }}
-  />
+  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color, marginRight: 8 }} />
 );
 
 type Props = { open: boolean; onClose: () => void; mode?: "candidate" | "employee" };
@@ -52,7 +33,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("not_held");
+  const [status, setStatus] = useState<"not_held" | "reserve" | "success" | "declined" | "canceled">("reserve"); // 👈 по умолчанию “в процессе”
   const [department, setDepartment] = useState(DEPARTMENTS[0].value);
   const [position, setPosition] = useState("");
   const [notes, setNotes] = useState("");
@@ -63,6 +44,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
 
   const handleSubmit = async () => {
     if (!fullName || !email) return;
+
     if (isEmployee) {
       await createEmployee({
         fullName,
@@ -71,27 +53,29 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
         department,
         position: position ? position : null,
         notes,
-        birthdayAt: birthday ? birthday.startOf("day").toISOString() : null
+        birthdayAt: birthday ? birthday.startOf("day").toISOString() : null,
       }).unwrap();
     } else {
-      await createCandidate({
+      const nowISO = new Date().toISOString();
+      const body: any = {
         fullName,
         email,
         phone: phone || undefined,
-        status,
+        status,            
         department,
         position: position || undefined,
-        notes
-      }).unwrap();
+        notes,
+      };
+      if (status === "reserve") {
+        body.polygraphAt = nowISO; 
+      }
+      await createCandidate(body).unwrap();
     }
-    setFullName("");
-    setPhone("");
-    setEmail("");
-    setStatus("not_held");
-    setDepartment(DEPARTMENTS[0].value);
-    setPosition("");
-    setNotes("");
-    setBirthday(null);
+
+    // reset
+    setFullName(""); setPhone(""); setEmail("");
+    setStatus("reserve"); setDepartment(DEPARTMENTS[0].value);
+    setPosition(""); setNotes(""); setBirthday(null);
     onClose();
   };
 
@@ -103,25 +87,37 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
       TransitionComponent={Transition}
       onClose={onClose}
       keepMounted
+      scroll="paper"
       sx={{
-        "& .MuiDialog-container": { justifyContent: "flex-end", alignItems: "stretch" }
+        "& .MuiDialog-container": {
+          justifyContent: "flex-end",
+          alignItems: "stretch",
+        },
       }}
       PaperProps={{
         sx: {
-          width: 480,
+          width: { xs: "100vw", sm: 480 }, // 👈 фулл-ширина на мобиле
           maxWidth: "none",
-          height: "100vh",
-          maxHeight: "100vh",
+          height: "100dvh",                // 👈 корректная высота на мобиле
+          maxHeight: "100dvh",
           m: 0,
           borderRadius: 0,
           boxShadow: (t) => t.shadows[8],
           display: "flex",
-          flexDirection: "column"
-        }
+          flexDirection: "column",
+        },
       }}
     >
       <DialogTitle>{isEmployee ? "Добавить сотрудника" : "Добавить кандидата"}</DialogTitle>
-      <DialogContent dividers sx={{ flex: 1, overflowY: "auto" }}>
+
+      <DialogContent
+        dividers
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          pb: 10, // 👈 место под липкие кнопки
+        }}
+      >
         <Box display="grid" gap={2}>
           <TextField label="Полное имя" value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
           <TextField label="Телефон" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380XXXXXXXXX" />
@@ -130,7 +126,12 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
           {!isEmployee && (
             <FormControl>
               <InputLabel id="status-label">Статус</InputLabel>
-              <Select labelId="status-label" value={status} label="Статус" onChange={(e) => setStatus(e.target.value as string)}>
+              <Select
+                labelId="status-label"
+                value={status}
+                label="Статус"
+                onChange={(e) => setStatus(e.target.value as any)}
+              >
                 {HR_STATUS_OPTIONS.map((o) => (
                   <MenuItem key={o.value} value={o.value}>
                     <Dot color={o.dot} />
@@ -162,11 +163,11 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
           </FormControl>
 
           <FormControl>
-            <InputLabel id="position-label">Position</InputLabel>
+            <InputLabel id="position-label">Должность</InputLabel>
             <Select
               labelId="position-label"
               value={position}
-              label="Position"
+              label="Должность"
               onChange={(e) => setPosition(e.target.value as string)}
               displayEmpty
             >
@@ -196,7 +197,20 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
           <TextField label="Заметки" value={notes} onChange={(e) => setNotes(e.target.value)} multiline rows={3} />
         </Box>
       </DialogContent>
-      <DialogActions>
+
+      <DialogActions
+        sx={{
+          position: "sticky",    
+          bottom: 0,
+          zIndex: 1,
+          bgcolor: "background.paper",
+          borderTop: 1,
+          borderColor: "divider",
+          px: 2,
+          py: 1.5,
+          pb: "calc(12px + env(safe-area-inset-bottom))", 
+        }}
+      >
         <Button onClick={onClose}>Отмена</Button>
         <Button onClick={handleSubmit} disabled={busy || !fullName || !email} variant="contained">
           Сохранить

@@ -131,9 +131,24 @@ function MobileBottomNav() {
           showLabels
           value={value}
           onChange={(_, newValue) => navigate(ITEMS[newValue].to)}
+          sx={{
+            "& .Mui-selected": {
+              color: ui.activeText,
+            },
+            "& .MuiBottomNavigationAction-root.Mui-selected": {
+              background: ui.activeBg,
+              boxShadow: "0 4px 12px rgba(15,35,64,0.35)",
+              borderRadius: "12px",
+              margin: "4px",
+            },
+          }}
         >
-          {ITEMS.map((it) => (
-            <BottomNavigationAction key={it.to} label={it.label} icon={it.icon} />
+          {ITEMS.map((it, i) => (
+            <BottomNavigationAction
+              key={it.to}
+              label={it.label}
+              icon={it.icon}
+            />
           ))}
         </BottomNavigation>
       </Paper>

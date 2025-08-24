@@ -4,7 +4,6 @@ import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";
 import type { ReactNode } from "react";
 import AppHeader from "src/components/AppHeader";
-import AddCandidateButton from "src/components/candidates/AddCandidateButton";
 import SideNav, { DRAWER_WIDTH } from "src/components/SideNav";
 
 export default function PrivateLayout({ children }: { children: ReactNode }) {
@@ -26,27 +25,29 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
       <Box
         component="main"
         sx={{
-          ml: { xs: 0, md: `${DRAWER_WIDTH}px` },       
-          pt: { xs: 0, md: 2 },                          
-          pb: { xs: 2, md: 2 },
-          pr: { xs: 0, md: 2 },                           
-          pl: { xs: 0, md: 2 },                      
+          ml: { xs: 0, md: `${DRAWER_WIDTH}px` },
+          pt: { xs: 0, md: 0 },
+          pb: { xs: 2, md: 0 }, 
+          pr: { xs: 0, md: 0 },
+          pl: { xs: 0, md: 0 },
           flex: 1,
           display: "flex",
           flexDirection: "column",
           minWidth: 0,
           minHeight: 0,
+          overflow: "hidden",
         }}
       >
         <Container
           maxWidth={false}
-          disableGutters                                
+          disableGutters
           sx={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
-            px: { xs: 0, sm: 2 },                        
+            px: { xs: 0, sm: 2, md: 0 }, 
+            overflow: "hidden", 
           }}
         >
           {children}

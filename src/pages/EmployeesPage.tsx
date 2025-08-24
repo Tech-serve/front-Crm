@@ -19,17 +19,18 @@ export default function EmployeesPage() {
     <Box
       component="main"
       sx={{
-        pt: { xs: 0, md: 2 },
-        px: { xs: 1.5, md: 2 },
-        pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 2 },
+        pt: { xs: 0, md: 0 },
+        px: { xs: 1.5, md: 0 }, 
+        pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 0 },
         height: "100dvh",
         display: "flex",
         flexDirection: "column",
         minHeight: 0,
         boxSizing: "border-box",
+        overflow: "hidden",
       }}
     >
-      <Typography variant="h5" sx={{ mb: { xs: 1, md: 2 } }}>
+      <Typography variant="h5" sx={{ mb: { xs: 1, md: 1 } }}>
         Сотрудники
       </Typography>
 
@@ -39,7 +40,9 @@ export default function EmployeesPage() {
         </Typography>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0, width: "100%" }}>
+      <Box
+        sx={{ flex: 1, minHeight: 0, width: "100%", overflow: "hidden" }}
+      >
         <DataGrid
           rows={rows}
           columns={employeesColumns}
@@ -73,11 +76,13 @@ export default function EmployeesPage() {
             height: "100%",
             width: "100%",
             border: 0,
+            "& .MuiDataGrid-main": { height: "100%" },
+            "& .MuiDataGrid-virtualScroller": {
+              overflowY: "auto",
+              paddingBottom: { xs: 1, md: 0 },
+            }, 
             "& .MuiDataGrid-columnHeaders": {
               borderRadius: { xs: 1, md: 2 },
-            },
-            "& .MuiDataGrid-virtualScroller": {
-              paddingBottom: { xs: 1, md: 0 },
             },
             "& .dg-center": { justifyContent: "center !important", px: 0 },
             "& .dg-center .MuiDataGrid-cellContent": { display: "flex", justifyContent: "center", width: "100%", overflow: "visible" },

@@ -26,10 +26,10 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         component="main"
         sx={{
           ml: { xs: 0, md: `${DRAWER_WIDTH}px` },
-          pt: { xs: 0, md: 0 },
-          pb: { xs: 2, md: 0 }, 
-          pr: { xs: 0, md: 0 },
-          pl: { xs: 0, md: 0 },
+          pt: { xs: 0, md: 2 },
+          pb: { xs: 2, md: 5 }, 
+          pr: { xs: 2, md: 2 },
+          pl: { xs: 2, md: 2},
           flex: 1,
           display: "flex",
           flexDirection: "column",

@@ -49,7 +49,7 @@ export default function CandidatesPage() {
         pt: { xs: 0, md: 0 },
         px: { xs: 1.5, md: 0 }, 
         pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 0 },
-        height: "100dvh",
+        height: "90dvh",
         display: "flex",
         flexDirection: "column",
         minHeight: 0,

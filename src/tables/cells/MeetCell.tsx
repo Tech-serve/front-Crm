@@ -77,10 +77,17 @@ export default function MidCell({ row, url }: Props) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
+
+  // NEW: локальная «голова» интервью (последнее состояние после create/edit)
+  const [localHead, setLocalHead] = useState<any | null>(null);
+
+  // Берём локальные значения, если они уже есть, иначе — данные из пропсов
+  const head = (localHead as any) || headIv;
   const finalUrl = useMemo(() => localUrl || url, [localUrl, url]);
+
   const [patchCandidate] = usePatchCandidateMutation();
 
-  const scheduledAtISO = headIv?.scheduledAt as any;
+  const scheduledAtISO = head?.scheduledAt as any;
   const scheduledLabel = useMemo(() => {
     if (!scheduledAtISO) return "";
     const d = new Date(scheduledAtISO);
@@ -128,6 +135,9 @@ export default function MidCell({ row, url }: Props) {
           id: row._id,
           body: { meetLink, interviews: [nextIv as any, ...prev] },
         }).unwrap();
+
+        // NEW: обновляем локальное состояние, чтобы UI сразу показал нужную дату/участников
+        setLocalHead(nextIv as any);
       }
 
       setOpenCreate(false);
@@ -166,7 +176,7 @@ export default function MidCell({ row, url }: Props) {
         setLocalUrl(nextLink);
       }
 
-      const current = headIv || {};
+      const current = head || {};
       const nextHead = {
         scheduledAt: iso,
         durationMinutes: (current as any).durationMinutes ?? 60,
@@ -185,6 +195,9 @@ export default function MidCell({ row, url }: Props) {
           id: row._id,
           body: { meetLink: nextLink, interviews: [nextHead as any, ...tail] },
         }).unwrap();
+
+        // NEW: локально обновляем «голову», чтобы сразу увидеть новую дату
+        setLocalHead(nextHead as any);
       }
 
       setOpenEdit(false);
@@ -253,9 +266,13 @@ export default function MidCell({ row, url }: Props) {
             size="small"
             startIcon={<EditCalendarOutlinedIcon />}
             onClick={() => {
-              setEditSummary(headIv?.notes || "Интервью");
-              setEditEmails(headIv?.participants?.join(", ") || row.email || "");
-              setEditDt(toLocalInputValue(headIv?.scheduledAt) || toLocalInputValue(new Date().toISOString()));
+              // NEW: берём из head (локальная голова > пропса)
+              setEditSummary(head?.notes || "Интервью");
+              setEditEmails(head?.participants?.join(", ") || row.email || "");
+              setEditDt(
+                toLocalInputValue(head?.scheduledAt) ||
+                toLocalInputValue(new Date().toISOString())
+              );
               setUpdateMeet(false);
               setOpenEdit(true);
             }}
@@ -314,8 +331,11 @@ export default function MidCell({ row, url }: Props) {
             <Button
               onClick={handleEdit}
               disabled={loading}
+              // СПИННЕР В КНОПКЕ
+              startIcon={
+                loading ? <CircularProgress size={16} thickness={5} /> : <EditCalendarOutlinedIcon />
+              }
               variant="contained"
-              startIcon={<EditCalendarOutlinedIcon />}
               sx={(t) => ({
                 backgroundColor: alpha(t.palette.primary.main, 0.15),
                 color: t.palette.primary.main,
@@ -342,8 +362,10 @@ export default function MidCell({ row, url }: Props) {
       <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Button
           size="small"
-          startIcon={<PhoneInTalkOutlinedIcon />}
           onClick={() => setOpenCreate(true)}
+          // СПИННЕР В КНОПКЕ
+          startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />}
+          disabled={loading}
           sx={(t) => ({
             fontWeight: 800,
             borderRadius: 2,
@@ -397,8 +419,11 @@ export default function MidCell({ row, url }: Props) {
           <Button
             onClick={handleCreate}
             disabled={loading}
+            // СПИННЕР В КНОПКЕ
+            startIcon={
+              loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />
+            }
             variant="contained"
-            startIcon={<PhoneInTalkOutlinedIcon />}
             sx={(t) => ({
               backgroundColor: alpha(t.palette.primary.main, 0.15),
               color: t.palette.primary.main,

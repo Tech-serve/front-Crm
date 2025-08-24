@@ -16,6 +16,8 @@ import {
   Checkbox,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 import PhoneInTalkOutlinedIcon from "@mui/icons-material/PhoneInTalkOutlined";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
 import { createMeetWebhook } from "src/api/meetWebhook";
@@ -196,6 +198,11 @@ export default function MidCell({ row, url }: Props) {
   if (finalUrl) {
     return (
       <>
+        {/* Блокирующий спиннер во время загрузки */}
+        <Backdrop open={loading} sx={(t) => ({ zIndex: t.zIndex.modal + 1, color: "#fff" })}>
+          <CircularProgress />
+        </Backdrop>
+
         <Box
           sx={{
             width: "100%",
@@ -327,6 +334,11 @@ export default function MidCell({ row, url }: Props) {
 
   return (
     <>
+      {/* Блокирующий спиннер во время загрузки */}
+      <Backdrop open={loading} sx={(t) => ({ zIndex: t.zIndex.modal + 1, color: "#fff" })}>
+        <CircularProgress />
+      </Backdrop>
+
       <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Button
           size="small"

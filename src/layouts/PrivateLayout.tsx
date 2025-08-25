@@ -20,16 +20,22 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
       <SideNav />
       <AppHeader drawerWidth={DRAWER_WIDTH} />
 
-      <Toolbar sx={{ minHeight: 56, flexShrink: 0 }} />
+      <Toolbar
+        sx={{
+          display: { xs: "none", md: "flex" }, // ← фикc
+          minHeight: { xs: 0, md: 56 },
+          flexShrink: 0,
+        }}
+      />
 
       <Box
         component="main"
         sx={{
           ml: { xs: 0, md: `${DRAWER_WIDTH}px` },
           pt: { xs: 0, md: 2 },
-          pb: { xs: 2, md: 5 }, 
+          pb: { xs: 2, md: 5 },
           pr: { xs: 2, md: 2 },
-          pl: { xs: 2, md: 2},
+          pl: { xs: 2, md: 2 },
           flex: 1,
           display: "flex",
           flexDirection: "column",
@@ -46,8 +52,8 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
-            px: { xs: 0, sm: 2, md: 0 }, 
-            overflow: "hidden", 
+            px: { xs: 0, sm: 2, md: 0 },
+            overflow: "hidden",
           }}
         >
           {children}

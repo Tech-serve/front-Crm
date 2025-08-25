@@ -3,6 +3,7 @@ import { Box, MenuItem, Select, styled } from "@mui/material";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
 import { usePatchEmployeeMutation } from "src/api/employeesApi";
+import { DEPARTMENTS } from "src/config/departmentConfig";
 
 type Props = {
   row: any;
@@ -20,16 +21,27 @@ const CompactSelect = styled(Select)(({ theme }) => ({
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
-  "& .MuiOutlinedInput-notchedOutline": { borderRadius: theme.shape.borderRadius },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderRadius: theme.shape.borderRadius,
+  },
 }));
 
 export default function PositionCell({ row, value, widthPx, patchKind = "candidate" }: Props) {
   const [patchCandidate] = usePatchCandidateMutation();
   const [patchEmployee] = usePatchEmployeeMutation();
 
-  const dept = row?.department as keyof typeof POSITION_OPTIONS;
-  const options = POSITION_OPTIONS[dept] || [];
+  const dept = row?.department as (typeof DEPARTMENTS)[number]["value"] | undefined;
+  const deptObj = useMemo(
+    () => DEPARTMENTS.find((d) => d.value === dept) ?? DEPARTMENTS[0],
+    [dept]
+  );
+
+  const options = POSITION_OPTIONS[dept as keyof typeof POSITION_OPTIONS] || [];
   const current = useMemo(() => value ?? row?.position ?? "", [value, row?.position]);
 
   const handle = async (next: string) => {
@@ -47,7 +59,12 @@ export default function PositionCell({ row, value, widthPx, patchKind = "candida
         value={current}
         onChange={(e) => handle(e.target.value as string)}
         displayEmpty
-        sx={{ width: widthPx ?? WIDTH }}
+        sx={{
+          width: widthPx ?? WIDTH,
+          bgcolor: deptObj.bg,
+          color: deptObj.fg,
+          "& .MuiSvgIcon-root": { color: deptObj.fg },
+        }}
         MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
       >
         <MenuItem value="">

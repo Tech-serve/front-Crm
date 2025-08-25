@@ -1,10 +1,11 @@
 import { useRef, useState, useMemo } from "react";
-import { Box, Button } from "@mui/material";
+import { Box, Button, IconButton, Tooltip } from "@mui/material"; // CHANGED: добавлены IconButton, Tooltip
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import { usePatchEmployeeMutation } from "src/api/employeesApi";
 import type { Employee } from "src/types/employee";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 export default function EmployeeTerminatedCell({ row }: { row: Employee }) {
   const [open, setOpen] = useState(false);
@@ -15,7 +16,7 @@ export default function EmployeeTerminatedCell({ row }: { row: Employee }) {
 
   const save = async (val: Dayjs | null) => {
     setOpen(false);
-    const iso = val ? val.startOf("day").toISOString() : null; // null = работает
+    const iso = val ? val.startOf("day").toISOString() : null; 
     await patch({ id: row._id, body: { terminatedAt: iso } }).unwrap();
   };
 
@@ -43,15 +44,22 @@ export default function EmployeeTerminatedCell({ row }: { row: Employee }) {
           {label}
         </Button>
 
-        {/* быстрый сброс, если дата уже стоит */}
         {value && (
-          <Button
-            size="small"
-            onClick={() => save(null)}
-            sx={{ fontSize: 12, minWidth: 0, px: 0.5, py: 0, height: 22, lineHeight: 1.1 }}
-          >
-            Очистить
-          </Button>
+          <Tooltip title="Сбросить дату">
+            <IconButton
+              size="small"
+              aria-label="Сбросить дату"
+              onClick={() => save(null)}
+              sx={{
+                p: 0.25,         
+                height: 22,      
+                width: 22,   
+                lineHeight: 1.1,
+              }}
+            >
+              <CloseRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
 
         <DatePicker

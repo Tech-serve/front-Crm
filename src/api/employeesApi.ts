@@ -35,10 +35,23 @@ export const employeesApi = baseApi.injectEndpoints({
     }),
     patchEmployee: build.mutation<Employee, { id: string; body: UpdateEmployeeBody }>({
       query: ({ id, body }) => ({ url: `/employees/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: "Employees", id }], 
+      invalidatesTags: (_res, _err, { id }) => [{ type: "Employees", id }],
+    }),
+    // 👇 добавлено: удаление сотрудника
+    deleteEmployee: build.mutation<{ ok: true } | void, string>({
+      query: (id) => ({ url: `/employees/${id}`, method: "DELETE" }),
+      invalidatesTags: (_res, _err, id) => [
+        { type: "Employees", id },
+        { type: "Employees", id: "LIST" },
+      ],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetEmployeesQuery, useCreateEmployeeMutation, usePatchEmployeeMutation } = employeesApi;
+export const {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  usePatchEmployeeMutation,
+  useDeleteEmployeeMutation, 
+} = employeesApi;

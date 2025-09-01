@@ -8,6 +8,31 @@ import PositionCell from "./cells/PositionCell";
 import WhenCell from "src/tables/cells/WhenCell";
 import MidCell from "./cells/MeetCell";
 
+// 👇 добавлено для удаления
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { useDeleteCandidateMutation } from "src/api/candidatesApi";
+
+function DeleteCandidateCell({ id }: { id: string }) {
+  const [del] = useDeleteCandidateMutation();
+  return (
+    <Tooltip title="Удалить кандидата">
+      <IconButton
+        size="small"
+        color="error"
+        onClick={() => {
+          if (confirm("Удалить кандидата без возможности восстановления?")) {
+            del(id);
+          }
+        }}
+      >
+        <CloseRoundedIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
+
 const LinkCell = ({ url }: { url?: string }) =>
   url ? (
     <a
@@ -101,6 +126,18 @@ const candidatesColumns: GridColDef[] = [
     flex: 1,
     minWidth: 200,
     editable: true,
+  },
+  {
+    field: "__del",
+    headerName: "",
+    width: 56,
+    sortable: false,
+    filterable: false,
+    align: "center",
+    headerAlign: "center",
+    cellClassName: "dg-center",
+    disableColumnMenu: true,
+    renderCell: (p) => <DeleteCandidateCell id={(p.row as any)._id} />,
   },
 ];
 

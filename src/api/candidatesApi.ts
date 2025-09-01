@@ -81,6 +81,16 @@ export const candidatesApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }],
     }),
 
+    // 👇 добавлено: удаление кандидата
+    deleteCandidate: build.mutation<{ ok: true } | void, string>({
+      query: (id) => ({ url: `/candidates/${id}`, method: "DELETE" }),
+      // после удаления инвалидируем и список, и саму строку
+      invalidatesTags: (_res, _err, id) => [
+        { type: "Candidates", id },
+        { type: "Candidates", id: "LIST" },
+      ],
+    }),
+
     getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({
       query: (q) => {
         const params = new URLSearchParams();
@@ -110,6 +120,7 @@ export const {
   useGetCandidatesQuery,
   useCreateCandidateMutation,
   usePatchCandidateMutation,
+  useDeleteCandidateMutation,        
   useGetCandidateMetricsQuery,
   useGetCandidateSnapshotsQuery,
   useFreezeCandidateSnapshotMutation,

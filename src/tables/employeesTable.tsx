@@ -5,6 +5,30 @@ import EmployeeBirthdayCell from "src/tables/cells/EmployeeBirthdayCell";
 import EmployeeHiredAtCell from "./cells/EmployeeHiredAtCell";
 import EmployeeTerminatedCell from "./cells/EmployeeTerminatedCell";
 
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { useDeleteEmployeeMutation } from "src/api/employeesApi";
+
+function DeleteEmployeeCell({ id }: { id: string }) {
+  const [del] = useDeleteEmployeeMutation();
+  return (
+    <Tooltip title="Удалить сотрудника">
+      <IconButton
+        size="small"
+        color="error"
+        onClick={() => {
+          if (confirm("Удалить сотрудника без возможности восстановления?")) {
+            del(id);
+          }
+        }}
+      >
+        <CloseRoundedIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
+
 const emailPreprocess = (params: GridPreProcessEditCellProps) => ({
   ...params.props,
   error: !!params.props.value &&
@@ -64,6 +88,19 @@ const employeesColumns: GridColDef[] = [
     renderCell: (p) => <EmployeeBirthdayCell row={p.row as any} />,
   },
   { field: "notes", headerName: "Заметки", flex: 1, minWidth: 220, editable: true },
+
+  {
+    field: "__del",
+    headerName: "",
+    width: 56,
+    sortable: false,
+    filterable: false,
+    align: "center",
+    headerAlign: "center",
+    cellClassName: "dg-center",
+    disableColumnMenu: true,
+    renderCell: (p) => <DeleteEmployeeCell id={(p.row as any)._id} />,
+  },
 ];
 
 export default employeesColumns;

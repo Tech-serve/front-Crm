@@ -26,12 +26,13 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+
 import { useGetCandidatesQuery } from "src/api/candidatesApi";
 import type { Candidate } from "src/types/domain";
 import { DEPARTMENTS } from "src/config/departmentConfig";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 
-// ---- Цвета/лейблы ----
+// ---- Цвета/лейблы (как было) ----
 const COLORS = {
   not_held: "#3498db",   // В процессе
   reserve:  "#f4a261",   // Полиграф
@@ -94,18 +95,20 @@ export default function Dashboard() {
   const nowMonth = now.startOf("month");
   const [month, setMonth] = useState<Dayjs>(nowMonth);
 
+  // данные кандидатов
   const { data: page } = useGetCandidatesQuery({ page: 1, pageSize: 1000 });
 
-  // фикс exhaustive-deps
+  // FIX exhaustive-deps: стабильный массив кандидатов
   const candidates = useMemo(
     () => ((page?.items as Candidate[]) ?? []),
     [page?.items]
   );
 
-  // фильтры
+  // --- СЕЛЕКТЫ: Отдел и Должность (как в таблицах) ---
   const [department, setDepartment] = useState<string>("all");
   const [position, setPosition] = useState<string>("all");
 
+  // DEPARTMENTS может быть readonly/разных форм — приводим к {value,label}
   const deptOptions = useMemo(
     () =>
       (DEPARTMENTS as readonly any[]).map((d) => ({
@@ -115,6 +118,7 @@ export default function Dashboard() {
     []
   );
 
+  // POSITION_OPTIONS — это Record<department, Array<{value,label}>>
   const posOptions = useMemo(() => {
     if (department === "all") {
       return Object.values(POSITION_OPTIONS).flat();
@@ -122,6 +126,7 @@ export default function Dashboard() {
     return POSITION_OPTIONS[department] ?? [];
   }, [department]);
 
+  // фильтрация по отделу/должности — всё дальше считает только по отфильтрованным
   const filteredCandidates = useMemo(() => {
     const dep = department.toLowerCase();
     const pos = position.toLowerCase();
@@ -206,6 +211,7 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* Шапка: добавлены селекты Отдел/Должность, кнопки обновить нет */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
         <Typography variant="h5" sx={{ mr: "auto" }}>Дашборд кандидатов</Typography>
         <Typography variant="body2" color="text.secondary">
@@ -216,6 +222,7 @@ export default function Dashboard() {
           <InputLabel id="dep-select-lbl">Отдел</InputLabel>
           <Select
             labelId="dep-select-lbl"
+            label="Отдел"
             value={department}
             onChange={(e) => { setDepartment(String(e.target.value)); setPosition("all"); }}
           >
@@ -230,6 +237,7 @@ export default function Dashboard() {
           <InputLabel id="pos-select-lbl">Должность</InputLabel>
           <Select
             labelId="pos-select-lbl"
+            label="Должность"
             value={position}
             onChange={(e) => setPosition(String(e.target.value))}
           >

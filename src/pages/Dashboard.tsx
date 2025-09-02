@@ -74,13 +74,8 @@ type SnapshotRow = { month: string } & Record<BucketKey, number>;
 type EventRow = { month: string; polygraph: number; accepted: number; declined: number; canceled: number };
 
 const YM = (d: Dayjs) => d.format("YYYY-MM");
-
-function isSameMonth(a: Dayjs, b: Dayjs) {
-  return a.year() === b.year() && a.month() === b.month();
-}
-function isSameOrBeforeMonth(a: Dayjs, b: Dayjs) {
-  return a.year() < b.year() || (a.year() === b.year() && a.month() <= b.month());
-}
+function isSameMonth(a: Dayjs, b: Dayjs) { return a.year() === b.year() && a.month() === b.month(); }
+function isSameOrBeforeMonth(a: Dayjs, b: Dayjs) { return a.year() < b.year() || (a.year() === b.year() && a.month() <= b.month()); }
 function isBetweenInclusive(d: unknown, start: Dayjs, end: Dayjs) {
   if (!d) return false;
   const v = dayjs(d as string);
@@ -106,7 +101,7 @@ export default function Dashboard() {
       (DEPARTMENTS as readonly any[]).map((d) => ({
         value: typeof d === "string" ? d : d?.value ?? String(d?.label ?? ""),
         label: typeof d === "string" ? d : d?.label ?? String(d?.value ?? ""),
-        bg:    (d as any).bg ?? "#EAF2FF",
+        bg:    (d as any).bg ?? "#1f2937",
         fg:    (d as any).fg ?? "#0f1b2a",
         dot:   (d as any).dot ?? "#9aa4af",
       })),
@@ -149,13 +144,11 @@ export default function Dashboard() {
     return res;
   }, [filteredCandidates, month]);
 
-  /* ===== Снимок по месяцам (фикс «В процессе» тянется по всем месяцам) ===== */
+  /* ===== Снимок по месяцам (фикс «В процессе» не размазывается) ===== */
   const snapshotBars = useMemo((): SnapshotRow[] => {
     const start = dayjs().startOf("year");
     const months: Dayjs[] = [];
-    for (let cur = start; isSameOrBeforeMonth(cur, nowMonth); cur = cur.add(1, "month")) {
-      months.push(cur);
-    }
+    for (let cur = start; isSameOrBeforeMonth(cur, nowMonth); cur = cur.add(1, "month")) months.push(cur);
 
     return months.map((m) => {
       const mStart = m.startOf("month");
@@ -163,15 +156,12 @@ export default function Dashboard() {
       const row: SnapshotRow = { month: YM(m), not_held: 0, reserve: 0, success: 0, declined: 0, canceled: 0 };
 
       for (const c of filteredCandidates) {
-        // считаем по событиям именно ЭТОГО месяца:
         if (isBetweenInclusive((c as any).acceptedAt,  mStart, mEnd)) { row.success  += 1; continue; }
         if (isBetweenInclusive((c as any).declinedAt,  mStart, mEnd)) { row.declined += 1; continue; }
         if (isBetweenInclusive((c as any).canceledAt,  mStart, mEnd)) { row.canceled += 1; continue; }
         if (isBetweenInclusive((c as any).polygraphAt, mStart, mEnd)) { row.reserve  += 1; continue; }
-        // В ПРОЦЕССЕ — только месяц создания
-        if (isBetweenInclusive((c as any).createdAt,   mStart, mEnd)) { row.not_held += 1; }
+        if (isBetweenInclusive((c as any).createdAt,   mStart, mEnd)) { row.not_held += 1; } // только месяц создания
       }
-
       return row;
     });
   }, [filteredCandidates, nowMonth]);
@@ -190,9 +180,7 @@ export default function Dashboard() {
     const start = dayjs().startOf("year");
     for (let cur = start; isSameOrBeforeMonth(cur, nowMonth); cur = cur.add(1, "month")) {
       const key = YM(cur);
-      if (!map.has(key)) {
-        map.set(key, { month: key, polygraph: 0, accepted: 0, declined: 0, canceled: 0 });
-      }
+      if (!map.has(key)) map.set(key, { month: key, polygraph: 0, accepted: 0, declined: 0, canceled: 0 });
     }
 
     return Array.from(map.values())
@@ -203,24 +191,35 @@ export default function Dashboard() {
   const prevMonth = () => setMonth((m) => m.subtract(1, "month"));
   const nextMonth = () => setMonth((m) => (isSameMonth(m, nowMonth) ? m : m.add(1, "month")));
 
-  /* ===== Render ===== */
   const currentDept = useMemo(() => {
-    if (department === "all") return { value: "all", label: "Все", bg: "#EFF4FF", fg: "#0f1b2a", dot: "#9aa4af" };
+    if (department === "all") return { value: "all", label: "Все", bg: "#334155", fg: "#fff", dot: "#9aa4af" };
     return (
       deptOptions.find((d) => d.value === department) ??
-      { value: department, label: department, bg: "#EFF4FF", fg: "#0f1b2a", dot: "#9aa4af" }
+      { value: department, label: department, bg: "#334155", fg: "#fff", dot: "#9aa4af" }
     );
   }, [department, deptOptions]);
 
+  // фон для селекта должности — в цвет текущей вертикали; белый текст
+  const positionBg = department === "all" ? "#475569" : currentDept.bg;
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      {/* Шапка: ровно такие же селекты, как в таблицах */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 12, mb: 2, flexWrap: "wrap" }}>
-        <Typography variant="h5" sx={{ mr: "auto" }}>Дашборд кандидатов</Typography>
+      {/* Заголовок без большого отступа */}
+      <Typography variant="h5" sx={{ mb: 1 }}>Дашборд кандидатов</Typography>
 
-        {/* Отдел */}
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" color="text.secondary">Отдел</Typography>
+      {/* ---- НОВАЯ ШАПКА ---- */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          mb: 2,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Левая группа: селекты */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 320 }}>
+          {/* Отдел */}
           <CompactSelect
             size="small"
             value={department}
@@ -228,8 +227,8 @@ export default function Dashboard() {
             sx={{
               width: WIDTH,
               bgcolor: currentDept.bg,
-              color: currentDept.fg,
-              "& .MuiSvgIcon-root": { color: currentDept.fg },
+              color: "#fff",
+              "& .MuiSvgIcon-root": { color: "#fff" },
             }}
             MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
           >
@@ -246,20 +245,17 @@ export default function Dashboard() {
               </MenuItem>
             ))}
           </CompactSelect>
-        </Box>
 
-        {/* Должность */}
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" color="text.secondary">Должность</Typography>
+          {/* Должность */}
           <CompactSelect
             size="small"
             value={position}
             onChange={(e) => setPosition(String(e.target.value))}
             sx={{
               width: WIDTH,
-              bgcolor: "#EAF7FF",
-              color: "#0f1b2a",
-              "& .MuiSvgIcon-root": { color: "#0f1b2a" },
+              bgcolor: positionBg,
+              color: "#fff",
+              "& .MuiSvgIcon-root": { color: "#fff" },
             }}
             MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
           >
@@ -270,21 +266,30 @@ export default function Dashboard() {
           </CompactSelect>
         </Box>
 
-        {/* Период */}
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" color="text.secondary">Период</Typography>
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-            <IconButton size="small" onClick={prevMonth}><ChevronLeftRoundedIcon /></IconButton>
-            <Chip label={month.format("MM.YYYY")} />
-            <IconButton size="small" onClick={nextMonth}><ChevronRightRoundedIcon /></IconButton>
-            <Chip
-              label="Сейчас"
-              color={isSameMonth(month, nowMonth) ? "primary" : "default"}
-              onClick={() => setMonth(nowMonth)}
-            />
-          </Box>
+        {/* Правая группа: период и “Сейчас” */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.0 }}>
+          <IconButton size="small" onClick={prevMonth} sx={{ color: "#fff", bgcolor: "#1f2937", "&:hover": { bgcolor: "#111827" } }}>
+            <ChevronLeftRoundedIcon fontSize="small" />
+          </IconButton>
+
+          <Chip
+            label={month.format("MM.YYYY")}
+            sx={{ bgcolor: "#1f2937", color: "#fff", fontWeight: 500 }}
+          />
+
+          <IconButton size="small" onClick={nextMonth} sx={{ color: "#fff", bgcolor: "#1f2937", "&:hover": { bgcolor: "#111827" } }}>
+            <ChevronRightRoundedIcon fontSize="small" />
+          </IconButton>
+
+          <Chip
+            label="Сейчас"
+            onClick={() => setMonth(nowMonth)}
+            sx={{ bgcolor: "primary.main", color: "#fff", fontWeight: 600, ml: 0.5 }}
+            clickable
+          />
         </Box>
       </Box>
+      {/* ---- /НОВАЯ ШАПКА ---- */}
 
       {/* KPI */}
       <Card sx={{ mb: 2 }}>
@@ -341,7 +346,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* События по месяцам (оставил как у тебя) */}
+      {/* События по месяцам (как было) */}
       <Card>
         <CardContent>
           <Typography variant="subtitle1" mb={2}>События по месяцам</Typography>

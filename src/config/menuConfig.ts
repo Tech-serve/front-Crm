@@ -5,7 +5,7 @@ export type MenuItem = { label: string; path: string };
 export const menuByRole: Record<Role, MenuItem[]> = {
   hr: [
     { label: "Dashboard", path: "/" },
-    { label: "Интервью",  path: "/hr/interviews" },
+    { label: "Собеседование",  path: "/hr/interviews" },
   ],
   buyer: [
     { label: "Dashboard",       path: "/" },
@@ -14,7 +14,7 @@ export const menuByRole: Record<Role, MenuItem[]> = {
   ],
   head: [
     { label: "Dashboard", path: "/" },
-    { label: "Интервью",  path: "/hr/interviews" },
+    { label: "Собеседование",  path: "/hr/interviews" },
     { label: "Генераторы ссылок", path: "/buyer/generators" },
     { label: "Обучалки",          path: "/buyer/training" },
     { label: "Администрирование", path: "/admin" },

@@ -1,4 +1,3 @@
-// frontend/src/tables/cells/MidCell.tsx
 import { useMemo, useState } from "react";
 import type { Candidate } from "src/types/domain";
 import {
@@ -59,7 +58,7 @@ export default function MidCell({ row, url }: Props) {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
 
-  const [summary, setSummary] = useState("Интервью");
+  const [summary, setSummary] = useState("Собеседование");
   const [emails, setEmails] = useState(row.email || "");
   const [dt, setDt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
@@ -69,7 +68,7 @@ export default function MidCell({ row, url }: Props) {
     )}:${pad(d.getMinutes())}`;
   });
 
-  const [editSummary, setEditSummary] = useState("Интервью");
+  const [editSummary, setEditSummary] = useState("Собеседование");
   const headIv = row.interviews?.[0];
 
   const [editEmails, setEditEmails] = useState<string>(
@@ -281,7 +280,7 @@ export default function MidCell({ row, url }: Props) {
             }
             disabled={loading}
             onClick={() => {
-              setEditSummary(headIv?.notes || "Интервью");
+              setEditSummary(headIv?.notes || "Собеседование");
               setEditEmails(headIv?.participants?.join(", ") || row.email || "");
               setEditDt(
                 toLocalInputValue(localScheduledAt || headIv?.scheduledAt) ||

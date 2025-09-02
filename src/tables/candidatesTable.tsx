@@ -1,90 +1,49 @@
-// frontend/src/tables/candidatesTable.tsx
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridPreProcessEditCellProps } from "@mui/x-data-grid";
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
-import type { Candidate, InterviewStatus } from "src/types/domain";
+
 import StatusCell from "src/tables/cells/StatusCell";
 import DepartmentCell from "./cells/DepartmentCell";
 import PositionCell from "./cells/PositionCell";
 import WhenCell from "src/tables/cells/WhenCell";
 import MidCell from "./cells/MeetCell";
+import DeleteCandidateCell from "src/tables/cells/DeleteCandidateCell";
 
-// 👇 добавлено для удаления
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import { useDeleteCandidateMutation } from "src/api/candidatesApi";
+const phonePreprocess = (params: GridPreProcessEditCellProps) => {
+  const v = String(params.props.value ?? "").trim();
+  const ok = v.length === 0 || /^[+()\d\s-]{5,}$/.test(v);
+  return { ...params.props, value: v, error: !ok };
+};
 
-function DeleteCandidateCell({ id }: { id: string }) {
-  const [del] = useDeleteCandidateMutation();
-  return (
-    <Tooltip title="Удалить кандидата">
-      <IconButton
-        size="small"
-        color="error"
-        onClick={() => {
-          if (confirm("Удалить кандидата без возможности восстановления?")) {
-            del(id);
-          }
-        }}
-      >
-        <CloseRoundedIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
-  );
-}
-
-const LinkCell = ({ url }: { url?: string }) =>
-  url ? (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        color: "#1a73e8",
-        textDecoration: "none",
-        maxWidth: "100%",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        fontWeight: 500,
-      }}
-    >
-      {url}
-    </a>
-  ) : (
-    <span style={{ color: "#94a3b8" }}>—</span>
-  );
+const emailPreprocess = (params: GridPreProcessEditCellProps) => {
+  const v = String(params.props.value ?? "").trim();
+  const error = v.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  return { ...params.props, value: v, error };
+};
 
 const candidatesColumns: GridColDef[] = [
   { field: "fullName", headerName: "Кандидат", flex: 1, minWidth: 160, editable: true },
+
   {
     field: "phone",
     headerName: "Телефон",
     width: 160,
     editable: true,
-    preProcessEditCellProps: (params) => {
-      const v = String(params.props.value ?? "").trim();
-      const ok = v.length === 0 || /^[+()\d\s-]{5,}$/.test(v);
-      return { ...params.props, value: v, error: !ok };
-    },
+    preProcessEditCellProps: phonePreprocess,
   },
   {
     field: "email",
     headerName: "Email",
     width: 200,
     editable: true,
-    preProcessEditCellProps: (params) => {
-      const v = String(params.props.value ?? "").trim();
-      const error = v.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      return { ...params.props, value: v, error };
-    },
+    preProcessEditCellProps: emailPreprocess,
   },
+
   {
     field: "scheduledAtText",
     headerName: "Когда",
     width: 220,
     sortable: false,
-    renderCell: (p) => <WhenCell row={p.row as Candidate} />,
+    renderCell: (p) => <WhenCell row={p.row as any} />,
   },
   {
     field: "statusLabel",
@@ -93,40 +52,38 @@ const candidatesColumns: GridColDef[] = [
     sortable: false,
     renderCell: (p) => (
       <StatusCell
-        row={p.row as Candidate}
-        value={p.row.statusCode as InterviewStatus}
+        row={p.row as any}
+        value={(p.row as any).statusCode}
         options={HR_STATUS_OPTIONS}
       />
     ),
   },
+
   {
     field: "department",
     headerName: "Отдел",
     width: 180,
     sortable: false,
-    renderCell: (p) => <DepartmentCell row={p.row as Candidate} value={p.value as any} />,
+    renderCell: (p) => <DepartmentCell row={p.row as any} value={p.value as any} />,
   },
   {
     field: "position",
     headerName: "Position",
     width: 180,
     sortable: false,
-    renderCell: (p) => <PositionCell row={p.row as Candidate} value={p.value as any} />,
+    renderCell: (p) => <PositionCell row={p.row as any} value={p.value as any} />,
   },
+
   {
     field: "meetLink",
-    headerName: "Google meet",
+    headerName: "Google Meet",
     width: 400,
     sortable: false,
-    renderCell: (p) => <MidCell row={p.row as Candidate} url={p.value as string | undefined} />,
+    renderCell: (p) => <MidCell row={p.row as any} url={p.value as string | undefined} />,
   },
-  {
-    field: "notes",
-    headerName: "Заметки",
-    flex: 1,
-    minWidth: 200,
-    editable: true,
-  },
+
+  { field: "notes", headerName: "Заметки", flex: 1, minWidth: 200, editable: true },
+
   {
     field: "__del",
     headerName: "",

@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.tsx
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import PrivateLayout from "../layouts/PrivateLayout";
@@ -8,12 +9,14 @@ import CandidatesPage from "src/pages/CandidatesPage";
 import EmployeesPage  from "src/pages/EmployeesPage";
 import Dashboard      from "src/pages/Dashboard";
 import ChecklistPage  from "src/pages/ChecklistPage";
+import CalendarPage   from "src/pages/Calendar"; // ← календарь
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
 
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Публичная зона */}
       <Route
         path="/login"
         element={
@@ -23,6 +26,7 @@ export function AppRoutes() {
         }
       />
 
+      {/* Домашняя страница (доступна всем авторизованным) */}
       <Route
         path="/"
         element={
@@ -34,6 +38,21 @@ export function AppRoutes() {
         }
       />
 
+      {/* Календарь — HR/Head */}
+      <Route
+        path="/calendar"
+        element={
+          <RequireRoles roles={["hr", "head"]}>
+            <PrivateLayout>
+              <CalendarPage />
+            </PrivateLayout>
+          </RequireRoles>
+        }
+      />
+      {/* Алиас на старый/HR-префиксный путь */}
+      <Route path="/hr/calendar" element={<Navigate to="/calendar" replace />} />
+
+      {/* Кандидаты — HR/Head */}
       <Route
         path="/hr/candidates"
         element={
@@ -45,6 +64,7 @@ export function AppRoutes() {
         }
       />
 
+      {/* Сотрудники — HR/Head */}
       <Route
         path="/hr/employeesPage"
         element={
@@ -56,6 +76,7 @@ export function AppRoutes() {
         }
       />
 
+      {/* Чеклист — HR/Head */}
       <Route
         path="/hr/checklist"
         element={
@@ -67,8 +88,8 @@ export function AppRoutes() {
         }
       />
 
+      {/* Совместимость/редиректы */}
       <Route path="/candidates" element={<Navigate to="/hr/checklist" replace />} />
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

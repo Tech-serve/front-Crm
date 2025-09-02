@@ -1,4 +1,4 @@
-import { Tooltip } from "@mui/material";
+// src/layouts/PrivateLayout.tsx
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";

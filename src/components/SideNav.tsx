@@ -1,3 +1,4 @@
+// src/components/SideNav.tsx
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
@@ -11,10 +12,11 @@ import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { NavLink, Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
-import DashboardRoundedIcon   from "@mui/icons-material/DashboardRounded";
-import PeopleRoundedIcon      from "@mui/icons-material/PeopleRounded";
-import ListAltRoundedIcon     from "@mui/icons-material/ListAltRounded";
-import ChecklistRoundedIcon   from "@mui/icons-material/ChecklistRounded";
+import DashboardRoundedIcon      from "@mui/icons-material/DashboardRounded";
+import PeopleRoundedIcon         from "@mui/icons-material/PeopleRounded";
+import ListAltRoundedIcon        from "@mui/icons-material/ListAltRounded";
+import ChecklistRoundedIcon      from "@mui/icons-material/ChecklistRounded";
+import CalendarMonthRoundedIcon  from "@mui/icons-material/CalendarMonthRounded"; // ← добавлено
 
 import logoUrl from "src/assets/logo.png";
 
@@ -99,10 +101,11 @@ function MobileBottomNav() {
   const navigate = useNavigate();
 
   const ITEMS = [
-    { to: "/",                 icon: <DashboardRoundedIcon />,  label: "Process"    },
-    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,     label: "Candidates" },
-    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,    label: "Employees"  },
-    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,   label: "Checklist"  },
+    { to: "/",                 icon: <DashboardRoundedIcon />,      label: "Process"    },
+    { to: "/calendar",         icon: <CalendarMonthRoundedIcon />,  label: "Calendar"   }, // ← добавлено
+    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,         label: "Candidates" },
+    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,        label: "Employees"  },
+    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,       label: "Checklist"  },
   ];
 
   const value = (() => {
@@ -132,7 +135,7 @@ function MobileBottomNav() {
         }}
       >
         <BottomNavigation
-          showLabels={false}                 
+          showLabels={false}
           value={value}
           onChange={(_, newValue) => navigate(ITEMS[newValue].to)}
           sx={{
@@ -166,10 +169,11 @@ export default function SideNav() {
   }
 
   const items = [
-    { to: "/",                 icon: <DashboardRoundedIcon />, label: "Process"    },
-    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,    label: "Candidates" },
-    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,   label: "Employees"  },
-    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,  label: "Checklist"  },
+    { to: "/",                 icon: <DashboardRoundedIcon />,      label: "Process"    },
+    { to: "/calendar",         icon: <CalendarMonthRoundedIcon />,  label: "Calendar"   }, // ← добавлено
+    { to: "/hr/candidates",    icon: <PeopleRoundedIcon />,         label: "Candidates" },
+    { to: "/hr/employeesPage", icon: <ListAltRoundedIcon />,        label: "Employees"  },
+    { to: "/hr/checklist",     icon: <ChecklistRoundedIcon/>,       label: "Checklist"  },
   ];
 
   return (

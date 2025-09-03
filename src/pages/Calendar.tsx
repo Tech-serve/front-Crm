@@ -45,17 +45,21 @@ type Employee = {
   position?: string | null;
 };
 
+type Interview = {
+  scheduledAt?: string | null;
+  durationMinutes?: number | null;
+  participants?: string[];
+  meetLink?: string | null;
+  status?: string | null;
+  source?: string | null;
+  notes?: string | null;
+};
+
 type Candidate = DomainCandidate & {
   _id?: string;
   fullName?: string;
-  department?: string | null;
-  position?: string | null;
-  meetLink?: string | null;
-  scheduledAt?: string | null;
-  meetingAt?: string | null;
-  interviewAt?: string | null;
-  googleMeetAt?: string | null;
-  meetAt?: string | null;
+  meetLink?: string | null;        // fallback, если в интервью нет ссылки
+  interviews?: Interview[];        // <-- главное поле для встреч
 };
 
 type CalEvent = {
@@ -63,9 +67,9 @@ type CalEvent = {
   kind: "birthday" | "meet";
   date: string;        // YYYY-MM-DD
   time?: string;       // HH:mm
-  title: string;       // имя человека
-  subtitle?: string;   // тип события
-  link?: string;       // ссылка на Meet
+  title: string;       // Имя человека
+  subtitle?: string;   // "День рождения" | "Google Meet"
+  link?: string;       // meet-ссылка
 };
 
 /* ===================== Утилиты ===================== */
@@ -81,18 +85,6 @@ const endOfView = (focus: Dayjs, mode: ViewMode) =>
 
 const toYMD = (d: Dayjs) => d.format("YYYY-MM-DD");
 
-function getMeetMeta(c: Partial<Candidate>): { when: Dayjs | null; link?: string } {
-  const raw =
-    c.meetingAt ??
-    c.scheduledAt ??
-    (c as any)?.meetAt ??
-    c.interviewAt ??
-    c.googleMeetAt ??
-    null;
-  const when = raw ? dayjs(raw) : null;
-  return { when: when && when.isValid() ? when : null, link: (c as any)?.meetLink ?? undefined };
-}
-
 function birthdayInYear(bday: string | null | undefined, year: number): Dayjs | null {
   if (!bday) return null;
   const d = dayjs(bday);
@@ -107,7 +99,7 @@ export default function CalendarPage() {
   const [mode, setMode] = useState<ViewMode>("month");
   const [focus, setFocus] = useState<Dayjs>(today);
 
-  // запросы к двум базам
+  // запросы к двум источникам
   const { data: employeesPage } = useGetEmployeesQuery({ page: 1, pageSize: 2000 } as any);
   const { data: candidatesPage } = useGetCandidatesQuery({ page: 1, pageSize: 2000 } as any);
 
@@ -131,11 +123,11 @@ export default function CalendarPage() {
   const rangeStart = useMemo(() => startOfView(focus, mode), [focus, mode]);
   const rangeEnd = useMemo(() => endOfView(focus, mode), [focus, mode]);
 
-  // сбор событий
+  // сбор событий (ДР из employees + все interviews[] из candidates)
   const events = useMemo<CalEvent[]>(() => {
     const out: CalEvent[] = [];
 
-    // Дни рождения (повторяются ежегодно), берём только попадающие в видимый диапазон
+    // Дни рождения: повторяются ежегодно
     const yearStart = rangeStart.year();
     const yearEnd = rangeEnd.year();
     for (const emp of employees) {
@@ -153,23 +145,32 @@ export default function CalendarPage() {
       }
     }
 
-    // Встречи кандидатов (дата + ссылка)
+    // Интервью кандидатов: берём все items из interviews[]
     for (const cand of candidates) {
-      const { when, link } = getMeetMeta(cand);
-      if (!when) continue;
-      if (when.isBefore(rangeStart) || when.isAfter(rangeEnd)) continue;
-      out.push({
-        id: `m-${cand._id ?? (cand as any).id ?? Math.random()}`,
-        kind: "meet",
-        date: toYMD(when),
-        time: when.format("HH:mm"),
-        title: cand.fullName ?? "Кандидат",
-        subtitle: "Google Meet",
-        link,
-      });
+      const baseId = cand._id ?? (cand as any).id ?? String(Math.random());
+      const baseLink = cand.meetLink ?? undefined;
+
+      const interviews = Array.isArray(cand.interviews) ? cand.interviews : [];
+      for (let i = 0; i < interviews.length; i++) {
+        const iv = interviews[i];
+        const when = iv?.scheduledAt ? dayjs(iv.scheduledAt) : null;
+        if (!when || !when.isValid()) continue;
+        if (when.isBefore(rangeStart) || when.isAfter(rangeEnd)) continue;
+
+        const link = iv?.meetLink ?? baseLink;
+        out.push({
+          id: `m-${baseId}-${i}`,
+          kind: "meet",
+          date: toYMD(when),
+          time: when.format("HH:mm"),
+          title: cand.fullName ?? "Кандидат",
+          subtitle: "Google Meet",
+          link,
+        });
+      }
     }
 
-    // --- правильная сортировка: date -> time
+    // сортировка: по дате, затем по времени (пустое время у ДР уходит в конец дня)
     out.sort((a, b) => {
       const aKey = `${a.date}T${a.time ?? "99:99"}`;
       const bKey = `${b.date}T${b.time ?? "99:99"}`;
@@ -267,13 +268,26 @@ export default function CalendarPage() {
       <Card>
         <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
           {mode === "month" && (
-            <MonthView start={startOfView(focus, "month")} end={endOfView(focus, "month")} today={today} eventsByDate={eventsByDate} />
+            <MonthView
+              start={startOfView(focus, "month")}
+              end={endOfView(focus, "month")}
+              today={today}
+              eventsByDate={eventsByDate}
+            />
           )}
           {mode === "week" && (
-            <WeekView start={startOfView(focus, "week")} today={today} eventsByDate={eventsByDate} />
+            <WeekView
+              start={startOfView(focus, "week")}
+              today={today}
+              eventsByDate={eventsByDate}
+            />
           )}
           {mode === "day" && (
-            <DayView day={focus.startOf("day")} today={today} eventsByDate={eventsByDate} />
+            <DayView
+              day={focus.startOf("day")}
+              today={today}
+              eventsByDate={eventsByDate}
+            />
           )}
         </CardContent>
       </Card>

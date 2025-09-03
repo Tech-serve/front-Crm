@@ -1,15 +1,7 @@
 // src/pages/Calendar.tsx
 import { useMemo, useState } from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Chip,
-  Stack,
-  Tooltip,
-  Divider,
+  Box, Card, CardContent, Typography, IconButton, Chip, Stack, Tooltip, Divider,
 } from "@mui/material";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
@@ -25,6 +17,7 @@ import { useGetEmployeesQuery } from "src/api/employeesApi";
 import { useGetCandidatesQuery } from "src/api/candidatesApi";
 import type { Candidate as DomainCandidate } from "src/types/domain";
 
+/* ===== Палитра ===== */
 const BG_LIGHT = "#EAF2FF";
 const BG_LIGHTER = "#F5F9FF";
 const BLUE = "#1e88e5";
@@ -35,6 +28,7 @@ const EVENT_COLORS = {
   meet: { bg: "#E0F7FA", fg: "#006064", dot: "#4DD0E1" },
 } as const;
 
+/* ===== Типы ===== */
 type ViewMode = "month" | "week" | "day";
 
 type Employee = {
@@ -58,19 +52,20 @@ type Interview = {
 type Candidate = DomainCandidate & {
   _id?: string;
   fullName?: string;
-  meetLink?: string | null;
+  meetLink?: string | null;     // fallback
   interviews?: Interview[];
 };
 
 type CalEvent = {
   id: string;
   kind: "birthday" | "meet";
-  date: string;
-  time?: string;
+  date: string;  // YYYY-MM-DD
+  time?: string; // HH:mm
   title: string;
   link?: string;
 };
 
+/* ===== Утилиты ===== */
 const startOfView = (focus: Dayjs, mode: ViewMode) =>
   mode === "month" ? focus.startOf("month").startOf("week")
   : mode === "week" ? focus.startOf("week")
@@ -91,6 +86,7 @@ function birthdayInYear(bday: string | null | undefined, year: number): Dayjs | 
   return copy.isValid() ? copy : null;
 }
 
+/** Ключ для дедупликации мит-ссылок */
 function normalizeMeetLink(u?: string | null): string {
   if (!u) return "";
   try {
@@ -99,7 +95,7 @@ function normalizeMeetLink(u?: string | null): string {
     const parts = url.pathname.split("/").filter(Boolean);
     if (host.includes("meet.google.com")) {
       const last = parts.pop() || "";
-      return last.toLowerCase();
+      return `meet.google.com/${last}`.toLowerCase();
     }
     return `${host}/${parts.join("/")}`.toLowerCase();
   } catch {
@@ -107,6 +103,7 @@ function normalizeMeetLink(u?: string | null): string {
   }
 }
 
+/** Короткое отображение ссылки */
 function shortMeet(u?: string | null): string {
   if (!u) return "";
   try {
@@ -118,6 +115,7 @@ function shortMeet(u?: string | null): string {
   }
 }
 
+/* ===== Страница ===== */
 export default function CalendarPage() {
   const today = dayjs().startOf("day");
   const [mode, setMode] = useState<ViewMode>("month");
@@ -145,10 +143,12 @@ export default function CalendarPage() {
   const rangeStart = useMemo(() => startOfView(focus, mode), [focus, mode]);
   const rangeEnd = useMemo(() => endOfView(focus, mode), [focus, mode]);
 
+  // Сбор событий с дедупликацией ссылок
   const events = useMemo<CalEvent[]>(() => {
     const out: CalEvent[] = [];
     const seenLinks = new Set<string>();
 
+    // Дни рождения
     const yearStart = rangeStart.year();
     const yearEnd = rangeEnd.year();
     for (const emp of employees) {
@@ -165,9 +165,11 @@ export default function CalendarPage() {
       }
     }
 
+    // Интервью
     for (const cand of candidates) {
       const baseId = cand._id ?? (cand as any).id ?? String(Math.random());
       const baseLink = cand.meetLink ?? undefined;
+
       const interviews = Array.isArray(cand.interviews) ? cand.interviews : [];
       for (let i = 0; i < interviews.length; i++) {
         const iv = interviews[i];
@@ -191,6 +193,7 @@ export default function CalendarPage() {
       }
     }
 
+    // Сортировка
     out.sort((a, b) => {
       const aKey = `${a.date}T${a.time ?? "99:99"}`;
       const bKey = `${b.date}T${b.time ?? "99:99"}`;
@@ -227,6 +230,7 @@ export default function CalendarPage() {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Typography variant="h5" sx={{ mb: 1 }}>Календарь</Typography>
 
+      {/* Панель управления */}
       <Card sx={{ mb: 2, border: "1px solid #e5eefc", background: BG_LIGHTER }}>
         <CardContent
           sx={{
@@ -279,6 +283,7 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
+      {/* Представления */}
       <Card>
         <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
           {mode === "month" && (
@@ -309,22 +314,26 @@ export default function CalendarPage() {
   );
 }
 
+/* ===== Представления ===== */
+
 function MonthView({
-  start,
-  end,
-  today,
-  eventsByDate,
+  start, end, today, eventsByDate,
 }: {
-  start: Dayjs;
-  end: Dayjs;
-  today: Dayjs;
-  eventsByDate: Map<string, CalEvent[]>;
+  start: Dayjs; end: Dayjs; today: Dayjs; eventsByDate: Map<string, CalEvent[]>;
 }) {
   const days: Dayjs[] = [];
   for (let d = start; d.isBefore(end) || d.isSame(end, "day"); d = d.add(1, "day")) days.push(d);
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5 }}>
+    <Box
+      sx={{
+        display: "grid",
+        // фиксируем ширину колонок: содержимое больше не растянет
+        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+        gap: 0.5,
+        minWidth: 0,
+      }}
+    >
       {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((w) => (
         <Box key={w} sx={{ px: 1, py: 0.5, color: BLUE_DARK, fontWeight: 600 }}>{w}</Box>
       ))}
@@ -348,9 +357,10 @@ function MonthView({
               filter: isOtherMonth ? "grayscale(18%)" : "none",
               display: "flex",
               flexDirection: "column",
+              minWidth: 0,
             }}
           >
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5, minWidth: 0 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: isToday ? BLUE_DARK : "#334155" }}>
                 {d.format("D")}
               </Typography>
@@ -359,7 +369,8 @@ function MonthView({
               </Typography>
             </Box>
 
-            <Box sx={{ mt: 0.5, overflowY: "auto", maxHeight: 92, pr: 0.5 }}>
+            {/* Список событий с ограничением по высоте */}
+            <Box sx={{ mt: 0.5, overflowY: "auto", maxHeight: 92, pr: 0.5, minWidth: 0 }}>
               <Stack spacing={0.5}>
                 {ev.map((e) => <EventBand key={e.id} e={e} />)}
                 {ev.length === 0 && (
@@ -375,13 +386,9 @@ function MonthView({
 }
 
 function WeekView({
-  start,
-  today,
-  eventsByDate,
+  start, today, eventsByDate,
 }: {
-  start: Dayjs;
-  today: Dayjs;
-  eventsByDate: Map<string, CalEvent[]>;
+  start: Dayjs; today: Dayjs; eventsByDate: Map<string, CalEvent[]>;
 }) {
   const cols: Dayjs[] = [];
   for (let d = start; d.isBefore(start.endOf("week")) || d.isSame(start.endOf("week"), "day"); d = d.add(1, "day"))
@@ -389,7 +396,7 @@ function WeekView({
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+      <Stack direction="row" spacing={1} sx={{ mb: 1, minWidth: 0 }}>
         {cols.map((d) => (
           <Box
             key={d.toString()}
@@ -409,7 +416,7 @@ function WeekView({
             <Typography variant="subtitle2" sx={{ mb: 1, color: BLUE_DARK, fontWeight: 700, whiteSpace: "nowrap" }}>
               {d.format("dd, DD.MM")}
             </Typography>
-            <Box sx={{ overflowY: "auto" }}>
+            <Box sx={{ overflowY: "auto", minWidth: 0 }}>
               <Stack spacing={0.75}>
                 {(eventsByDate.get(toYMD(d)) ?? []).map((e) => <EventBand key={e.id} e={e} />)}
                 {(eventsByDate.get(toYMD(d)) ?? []).length === 0 && (
@@ -425,13 +432,9 @@ function WeekView({
 }
 
 function DayView({
-  day,
-  today,
-  eventsByDate,
+  day, today, eventsByDate,
 }: {
-  day: Dayjs;
-  today: Dayjs;
-  eventsByDate: Map<string, CalEvent[]>;
+  day: Dayjs; today: Dayjs; eventsByDate: Map<string, CalEvent[]>;
 }) {
   const list = eventsByDate.get(toYMD(day)) ?? [];
   return (
@@ -459,6 +462,7 @@ function DayView({
   );
 }
 
+/* ===== Плашка события (фикс ширины + обрезка ссылки) ===== */
 function EventBand({ e }: { e: CalEvent }) {
   const palette = e.kind === "birthday" ? EVENT_COLORS.birthday : EVENT_COLORS.meet;
 
@@ -470,25 +474,25 @@ function EventBand({ e }: { e: CalEvent }) {
         alignItems: "center",
         gap: 1,
         px: 1,
-        height: 38,
+        height: 38,                 // не растягиваем по высоте
         borderRadius: 1,
         bgcolor: palette.bg,
         color: palette.fg,
         border: `1px solid ${palette.dot}`,
         overflow: "hidden",
         minWidth: 0,
+        boxSizing: "border-box",
       }}
       title={e.kind === "meet" && e.link ? shortMeet(e.link) : undefined}
     >
       <Box sx={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {e.kind === "birthday" ? (
-          <CakeRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
-        ) : (
-          <PhoneInTalkRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
-        )}
+        {e.kind === "birthday"
+          ? <CakeRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
+          : <PhoneInTalkRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
+        }
       </Box>
 
-      <Box sx={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 0.25 }}>
+      <Box sx={{ minWidth: 0, maxWidth: "100%", flex: 1, display: "flex", flexDirection: "column", gap: 0.25 }}>
         <Typography
           variant="body2"
           sx={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
@@ -501,20 +505,26 @@ function EventBand({ e }: { e: CalEvent }) {
             <Typography variant="caption" sx={{ flexShrink: 0 }}>
               {e.time}
             </Typography>
+
             {e.link && (
-              <Typography
-                variant="caption"
-                sx={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+              <Box
+                component="a"
+                href={e.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  display: "block",
+                  color: "inherit",
+                  textDecoration: "underline",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                }}
               >
-                <a
-                  href={e.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "inherit", textDecoration: "underline" }}
-                >
-                  {shortMeet(e.link)}
-                </a>
-              </Typography>
+                {shortMeet(e.link)}
+              </Box>
             )}
           </Box>
         )}
@@ -523,6 +533,7 @@ function EventBand({ e }: { e: CalEvent }) {
   );
 }
 
+/* ===== SX helpers ===== */
 function chipSx(active: boolean) {
   return {
     bgcolor: active ? BLUE : "#fff",

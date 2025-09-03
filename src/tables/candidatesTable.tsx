@@ -41,14 +41,14 @@ const candidatesColumns: GridColDef[] = [
   {
     field: "scheduledAtText",
     headerName: "Когда",
-    width: 220,
+    width: 110,
     sortable: false,
     renderCell: (p) => <WhenCell row={p.row as any} />,
   },
   {
     field: "statusLabel",
     headerName: "Статус",
-    width: 250,
+    width: 245,
     sortable: false,
     renderCell: (p) => (
       <StatusCell
@@ -82,7 +82,7 @@ const candidatesColumns: GridColDef[] = [
     renderCell: (p) => <MidCell row={p.row as any} url={p.value as string | undefined} />,
   },
 
-  { field: "notes", headerName: "Заметки", flex: 1, minWidth: 200, editable: true },
+  { field: "notes", headerName: "Заметки", flex: 1, minWidth: 260, editable: true },
 
   {
     field: "__del",

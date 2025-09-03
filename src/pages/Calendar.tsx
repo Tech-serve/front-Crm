@@ -150,6 +150,7 @@ export default function CalendarPage() {
       const baseId = cand._id ?? (cand as any).id ?? String(Math.random());
       const baseLink = cand.meetLink ?? undefined;
 
+      // ⬇️ ЗАМЕНА куска внутри useMemo<CalEvent[]> (где пушатся интервью кандидатов)
       const interviews = Array.isArray(cand.interviews) ? cand.interviews : [];
       for (let i = 0; i < interviews.length; i++) {
         const iv = interviews[i];
@@ -164,7 +165,6 @@ export default function CalendarPage() {
           date: toYMD(when),
           time: when.format("HH:mm"),
           title: cand.fullName ?? "Кандидат",
-          subtitle: "Google Meet",
           link,
         });
       }
@@ -449,14 +449,20 @@ function DayView({
 /* ===================== Виджеты событий ===================== */
 
 // Плашка на всю ширину ~1 см высотой, одинаковая для обоих типов
+// ⬇️ ЗАМЕНА компонента EventBand целиком
 function EventBand({ e }: { e: CalEvent }) {
   const palette = e.kind === "birthday" ? EVENT_COLORS.birthday : EVENT_COLORS.meet;
-  const leftDot = <Box sx={{ width: 10, height: 10, borderRadius: 1, bgcolor: palette.dot, flex: "0 0 auto" }} />;
 
-  const title =
-    e.kind === "birthday"
-      ? `🎂 ${e.title}`
-      : `${e.time ?? ""}${e.time ? " • " : ""}Google Meet — ${e.title}`;
+  const shortMeet = (u?: string) => {
+    if (!u) return "";
+    try {
+      const { hostname, pathname } = new URL(u);
+      const last = pathname.split("/").filter(Boolean).pop() || "";
+      return `${hostname}/${last}`;
+    } catch {
+      return u;
+    }
+  };
 
   return (
     <Box
@@ -465,27 +471,60 @@ function EventBand({ e }: { e: CalEvent }) {
         alignItems: "center",
         gap: 1,
         px: 1,
-        height: 38,               // ~1 см
+        py: 0.5,
         borderRadius: 1,
         bgcolor: palette.bg,
         color: palette.fg,
         border: `1px solid ${palette.dot}`,
         overflow: "hidden",
       }}
-      title={`${e.subtitle ?? ""}${e.link ? " • ссылка" : ""}`}
     >
-      {leftDot}
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+      <Box sx={{ width: 10, height: 10, borderRadius: 1, bgcolor: palette.dot, flex: "0 0 auto" }} />
+
+      <Box sx={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 0.25 }}>
         <Typography
           variant="body2"
           sx={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+          title={e.title}
         >
-          {title}
+          {e.title}
         </Typography>
-        {e.kind === "meet" && e.link && (
-          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
-            <a href={e.link} target="_blank" rel="noopener noreferrer">ссылка</a>
-          </Typography>
+
+        {e.kind === "meet" && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              minWidth: 0,
+              alignItems: "baseline",
+              color: "#475569",
+            }}
+          >
+            <Typography variant="caption" sx={{ flexShrink: 0 }}>
+              {e.time}
+            </Typography>
+            {e.link && (
+              <Typography
+                variant="caption"
+                sx={{
+                  minWidth: 0,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+                title={e.link}
+              >
+                <a
+                  href={e.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
+                  {shortMeet(e.link)}
+                </a>
+              </Typography>
+            )}
+          </Box>
         )}
       </Box>
     </Box>

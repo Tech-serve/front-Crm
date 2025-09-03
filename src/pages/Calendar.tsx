@@ -10,7 +10,6 @@ import ViewModuleRoundedIcon from "@mui/icons-material/ViewModuleRounded";
 import ViewWeekRoundedIcon from "@mui/icons-material/ViewWeekRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import CakeRoundedIcon from "@mui/icons-material/CakeRounded";
-import PhoneInTalkRoundedIcon from "@mui/icons-material/PhoneInTalkRounded";
 import dayjs, { Dayjs } from "dayjs";
 
 import { useGetEmployeesQuery } from "src/api/employeesApi";
@@ -488,7 +487,7 @@ function EventBand({ e }: { e: CalEvent }) {
       <Box sx={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {e.kind === "birthday"
           ? <CakeRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
-          : <PhoneInTalkRoundedIcon sx={{ fontSize: 16, color: palette.dot }} />
+          : <Box component="span" role="img" aria-label="phone" sx={{ fontSize: 16, lineHeight: 1 }}>☎️</Box>
         }
       </Box>
 

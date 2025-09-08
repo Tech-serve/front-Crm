@@ -1,7 +1,6 @@
-// EmployeeBirthdayCell.tsx
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { usePatchEmployeeMutation } from "src/api/employeesApi";
 import type { Employee } from "src/types/employee";
 
@@ -9,13 +8,16 @@ export default function EmployeeBirthdayCell({ row }: { row: Employee }) {
   const [patch] = usePatchEmployeeMutation();
   const value = row.birthdayAt ? dayjs(row.birthdayAt) : null;
 
+  const toIsoNoonUTC = (val: Dayjs | null) =>
+    val ? `${val.format("YYYY-MM-DD")}T12:00:00.000Z` : null;
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
         value={value}
         onChange={async (val) => {
-          const iso = val ? val.startOf("day").toISOString() : null;
-          await patch({ id: row._id, body: { birthdayAt: iso ?? null } }).unwrap();
+          const iso = toIsoNoonUTC(val);
+          await patch({ id: row._id, body: { birthdayAt: iso } }).unwrap();
         }}
         format="DD.MM.YYYY"
         slotProps={{
@@ -23,7 +25,7 @@ export default function EmployeeBirthdayCell({ row }: { row: Employee }) {
             size: "small",
             sx: {
               width: 120,
-              mx: "auto",             
+              mx: "auto",
               "& input": { textAlign: "center" },
             },
           } as any,

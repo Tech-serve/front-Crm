@@ -48,10 +48,9 @@ function toLocalInputValue(iso?: string) {
 
 function toIsoFromLocalInput(v: string) {
   if (!v) return new Date().toISOString();
-  const local = new Date(v);
+  const local = new Date(v);           
   if (isNaN(+local)) return new Date().toISOString();
-  // сохраняем выбранные "часы:минуты" как ISO в UTC (стабильное хранение)
-  return new Date(local.getTime() - local.getTimezoneOffset() * 60000).toISOString();
+  return local.toISOString();
 }
 
 export default function MidCell({ row, url }: Props) {

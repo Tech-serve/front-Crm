@@ -48,9 +48,8 @@ function toLocalInputValue(iso?: string) {
 
 function toIsoFromLocalInput(v: string) {
   if (!v) return new Date().toISOString();
-  const local = new Date(v);           
-  if (isNaN(+local)) return new Date().toISOString();
-  return local.toISOString();
+  const d = new Date(v); // "YYYY-MM-DDTHH:mm" — это локальное время
+  return d.toISOString(); // правильный UTC без лишних сдвигов
 }
 
 export default function MidCell({ row, url }: Props) {

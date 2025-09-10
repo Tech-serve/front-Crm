@@ -1,17 +1,17 @@
 import { baseApi } from "./baseApi";
 import type { Candidate, Interview, Paginated, DepartmentValue } from "src/types/domain";
 
-type Status = Candidate["status"]; // "not_held" | "reserve" | "success" | "declined" | "canceled"
+type Status = Candidate["status"];
 
 type CreateCandidateBody = {
   fullName: string;
   email: string;
   phone?: string;
-  status?: Status;                 // 👈 передаём “not_held” по умолчанию
+  status?: Status;
   department?: DepartmentValue | string;
   position?: string;
   notes?: string;
-  interview?: {                    // 👈 для “в процессе” можно сразу слать событие
+  interview?: {
     scheduledAt: string;
     status?: Status;
     source?: "crm" | "jira";
@@ -26,7 +26,7 @@ type CreateCandidateBody = {
 type UpdateCandidateBody = {
   notes?: string;
   status?: Status;
-  meetLink?: string;
+  meetLink?: string | null;
   phone?: string;
   department?: DepartmentValue;
   position?: string;
@@ -81,10 +81,8 @@ export const candidatesApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [{ type: "Candidates", id }],
     }),
 
-    // 👇 добавлено: удаление кандидата
     deleteCandidate: build.mutation<{ ok: true } | void, string>({
       query: (id) => ({ url: `/candidates/${id}`, method: "DELETE" }),
-      // после удаления инвалидируем и список, и саму строку
       invalidatesTags: (_res, _err, id) => [
         { type: "Candidates", id },
         { type: "Candidates", id: "LIST" },
@@ -120,7 +118,7 @@ export const {
   useGetCandidatesQuery,
   useCreateCandidateMutation,
   usePatchCandidateMutation,
-  useDeleteCandidateMutation,        
+  useDeleteCandidateMutation,
   useGetCandidateMetricsQuery,
   useGetCandidateSnapshotsQuery,
   useFreezeCandidateSnapshotMutation,

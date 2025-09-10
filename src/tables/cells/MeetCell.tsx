@@ -16,12 +16,11 @@ import {
   Backdrop,
   CircularProgress,
   IconButton,
-  Tooltip,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import PhoneInTalkOutlinedIcon from "@mui/icons-material/PhoneInTalkOutlined";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
-import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { createMeetWebhook } from "src/api/meetWebhook";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
 
@@ -50,8 +49,8 @@ function toLocalInputValue(iso?: string) {
 }
 
 function toIsoFromLocalInput(v: string) {
-  const d = v ? new Date(v) : new Date();
-  d.setSeconds(0, 0);
+  if (!v) return new Date().toISOString();
+  const d = new Date(v);
   return d.toISOString();
 }
 
@@ -64,12 +63,11 @@ export default function MidCell({ row, url }: Props) {
   const [dt, setDt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-      d.getHours()
-    )}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
 
-  const headIv = row.interviews?.[0];
+  const headIv = useMemo(() => row.interviews?.[0], [row.interviews]);
+  const participantsKey = useMemo(() => (headIv?.participants || []).join(","), [headIv?.participants]);
 
   const [editSummary, setEditSummary] = useState(headIv?.notes || "Собеседование");
   const [editEmails, setEditEmails] = useState<string>(headIv?.participants?.join(", ") || row.email || "");
@@ -77,32 +75,29 @@ export default function MidCell({ row, url }: Props) {
   const [localScheduledAt, setLocalScheduledAt] = useState<string | undefined>(
     headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined
   );
-  const [editDt, setEditDt] = useState<string>(toLocalInputValue(localScheduledAt || headIv?.scheduledAt));
 
+  const [editDt, setEditDt] = useState<string>(toLocalInputValue(localScheduledAt || headIv?.scheduledAt));
   const [updateMeet, setUpdateMeet] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
+  const finalUrl = useMemo(() => localUrl || url, [localUrl, url]);
+
   const [patchCandidate] = usePatchCandidateMutation();
 
-// стало
-const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    const nextIso = headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined;
+    setLocalScheduledAt(nextIso);
+    setEditSummary(headIv?.notes || "Собеседование");
+    setEditEmails(participantsKey || row.email || "");
+    setEditDt(toLocalInputValue(nextIso));
+  }, [row._id, row.updatedAt, headIv?.scheduledAt, headIv?.notes, participantsKey, row.email]);
 
-// берём локальное значение если есть, иначе — из кандидата, иначе — из пропса url
-const finalUrl = useMemo(
-  () => localUrl ?? row.meetLink ?? url,
-  [localUrl, row.meetLink, url]
-);
-
-// эффект больше НЕ читает localUrl
-useEffect(() => {
-  const iso = headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined;
-  setLocalScheduledAt(iso);
-  setEditDt(toLocalInputValue(iso));
-  setEditSummary(headIv?.notes || "Собеседование");
-  setEditEmails(headIv?.participants?.join(", ") || row.email || "");
-}, [headIv?.scheduledAt, headIv?.notes, headIv?.participants, row.email]);
+  useEffect(() => {
+    setLocalUrl(url);
+  }, [url]);
 
   const scheduledLabel = useMemo(() => {
     const iso = localScheduledAt || (headIv?.scheduledAt as any);
@@ -118,11 +113,9 @@ useEffect(() => {
       const list = emails.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
       const valids = Array.from(new Set(list.filter((e) => emailRe.test(e))));
-      if (valids.length === 0 && !emailRe.test(row.email || "")) {
-        throw new Error("Укажите хотя бы один email");
-      }
-
       const candidateEmail = emailRe.test(row.email || "") ? row.email! : valids[0];
+      if (!candidateEmail) throw new Error("Укажите хотя бы один email");
+
       const companyEmails = valids.join(",");
       const iso = toIsoFromLocalInput(dt);
       const issueKey = `CRM-${row._id ?? Math.random().toString(36).slice(2, 10)}`;
@@ -151,10 +144,7 @@ useEffect(() => {
           notes: summary,
         };
         const prev = Array.isArray(row.interviews) ? row.interviews : [];
-        await patchCandidate({
-          id: row._id,
-          body: { meetLink, interviews: [nextIv as any, ...prev] },
-        }).unwrap();
+        await patchCandidate({ id: row._id, body: { meetLink, interviews: [nextIv as any, ...prev] } }).unwrap();
       }
 
       setOpenCreate(false);
@@ -166,23 +156,21 @@ useEffect(() => {
   }
 
   async function handleEdit() {
+    if (!row._id) return;
     setLoading(true);
     setErr(null);
     try {
       const list = editEmails.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
       const valids = Array.from(new Set(list.filter((e) => emailRe.test(e))));
-      if (valids.length === 0 && !emailRe.test(row.email || "")) {
-        throw new Error("Укажите хотя бы один email");
-      }
-
       const iso = toIsoFromLocalInput(editDt);
       const issueKey = `CRM-${row._id ?? Math.random().toString(36).slice(2, 10)}`;
 
-      let nextLink = finalUrl || "";
+      let nextLink = finalUrl;
       if (updateMeet) {
-        const candidateEmail = emailRe.test(row.email || "") ? row.email! : valids[0];
+        const candidateEmail = emailRe.test(row.email || "") ? row.email! : (valids[0] || "");
         const companyEmails = valids.join(",");
+        if (!candidateEmail) throw new Error("Укажите хотя бы один email");
         nextLink = await createMeetWebhook({
           issueKey,
           summary: editSummary,
@@ -195,27 +183,24 @@ useEffect(() => {
         setLocalUrl(nextLink);
       }
 
-      const current = headIv || {};
-      const nextHead = {
+      const nextHead: any = {
         scheduledAt: iso,
-        durationMinutes: (current as any).durationMinutes ?? 60,
+        durationMinutes: (headIv as any)?.durationMinutes ?? 60,
         participants: valids,
-        meetLink: nextLink,
-        status: (current as any).status ?? "not_held",
-        source: (current as any).source ?? "crm",
+        status: (headIv as any)?.status ?? "not_held",
+        source: (headIv as any)?.source ?? "crm",
         notes: editSummary,
-        googleCalendarEventId: (current as any).googleCalendarEventId,
-        jiraIssueId: (current as any).jiraIssueId,
       };
+      if (nextLink) nextHead.meetLink = nextLink;
 
+      // сбрасываем «антиклеймо», чтобы планировщик снова прислал за час
+      // (не переносим старое reminded1hAt в новый объект)
       const tail = (row.interviews || []).slice(1);
 
-      if (row._id) {
-        await patchCandidate({
-          id: row._id,
-          body: { meetLink: nextLink, interviews: [nextHead as any, ...tail] },
-        }).unwrap();
-      }
+      await patchCandidate({
+        id: row._id,
+        body: { meetLink: nextLink ?? undefined, interviews: [nextHead, ...tail] },
+      }).unwrap();
 
       setLocalScheduledAt(iso);
       setOpenEdit(false);
@@ -226,21 +211,28 @@ useEffect(() => {
     }
   }
 
-  async function handleDelete() {
-    if (loading || !row._id) return;
-    const yes = window.confirm("Удалить текущий мит?");
-    if (!yes) return;
+  async function handleDeleteLink() {
+    if (!row._id) return;
     setLoading(true);
     setErr(null);
     try {
+      const current = headIv || {};
       const tail = (row.interviews || []).slice(1);
+      const nextHead: any = {
+        scheduledAt: (current as any).scheduledAt,
+        durationMinutes: (current as any).durationMinutes ?? 60,
+        participants: (current as any).participants || [],
+        status: (current as any).status ?? "not_held",
+        source: (current as any).source ?? "crm",
+        notes: (current as any).notes || "Собеседование",
+      };
+
       await patchCandidate({
         id: row._id,
-        body: { meetLink: "", interviews: tail },
+        body: { meetLink: null, interviews: [nextHead, ...tail] },
       }).unwrap();
+
       setLocalUrl(undefined);
-      setLocalScheduledAt(undefined);
-      setEditDt("");
     } catch (e: any) {
       setErr(String(e?.message || e));
     } finally {
@@ -255,16 +247,7 @@ useEffect(() => {
           <CircularProgress />
         </Backdrop>
 
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            overflow: "hidden",
-          }}
-        >
+        <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", gap: 1, overflow: "hidden" }}>
           <Link
             href={finalUrl}
             target="_blank"
@@ -297,6 +280,10 @@ useEffect(() => {
             </Typography>
           ) : null}
 
+          <IconButton size="small" color="error" onClick={handleDeleteLink} disabled={loading} sx={{ ml: 0.5, flexShrink: 0 }}>
+            <DeleteOutlineOutlinedIcon fontSize="small" />
+          </IconButton>
+
           <Button
             size="small"
             startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <EditCalendarOutlinedIcon />}
@@ -324,14 +311,6 @@ useEffect(() => {
           >
             новый
           </Button>
-
-          <Tooltip title="Удалить мит">
-            <span>
-              <IconButton size="small" color="error" onClick={handleDelete} disabled={loading}>
-                <DeleteForeverRoundedIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
         </Box>
 
         <Dialog open={openEdit} onClose={() => !loading && setOpenEdit(false)} maxWidth="xs" fullWidth>
@@ -339,35 +318,14 @@ useEffect(() => {
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               <TextField label="Тема" value={editSummary} onChange={(e) => setEditSummary(e.target.value)} fullWidth />
-              <TextField
-                label="Участники (email, через запятую)"
-                value={editEmails}
-                onChange={(e) => setEditEmails(e.target.value)}
-                fullWidth
-              />
-              <TextField
-                type="datetime-local"
-                label="Новая дата и время"
-                value={editDt}
-                onChange={(e) => setEditDt(e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-              <FormControlLabel
-                control={<Checkbox checked={updateMeet} onChange={(e) => setUpdateMeet(e.target.checked)} />}
-                label="Обновить событие в Meet"
-              />
-              {err && (
-                <Typography color="error" variant="body2">
-                  {err}
-                </Typography>
-              )}
+              <TextField label="Участники (email, через запятую)" value={editEmails} onChange={(e) => setEditEmails(e.target.value)} fullWidth />
+              <TextField type="datetime-local" label="Новая дата и время" value={editDt} onChange={(e) => setEditDt(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+              <FormControlLabel control={<Checkbox checked={updateMeet} onChange={(e) => setUpdateMeet(e.target.checked)} />} label="Обновить событие в Meet" />
+              {err && <Typography color="error" variant="body2">{err}</Typography>}
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenEdit(false)} disabled={loading}>
-              Отмена
-            </Button>
+            <Button onClick={() => setOpenEdit(false)} disabled={loading}>Отмена</Button>
             <Button
               onClick={handleEdit}
               disabled={loading}
@@ -410,10 +368,7 @@ useEffect(() => {
             border: `1px solid ${alpha(t.palette.primary.main, 0.25)}`,
             boxShadow: "none",
             backdropFilter: "saturate(1.2) blur(2px)",
-            "&:hover": {
-              backgroundColor: alpha(t.palette.primary.main, 0.2),
-              boxShadow: "none",
-            },
+            "&:hover": { backgroundColor: alpha(t.palette.primary.main, 0.2), boxShadow: "none" },
             textTransform: "uppercase",
           })}
         >
@@ -426,31 +381,13 @@ useEffect(() => {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField label="Тема" value={summary} onChange={(e) => setSummary(e.target.value)} fullWidth />
-            <TextField
-              label="Участники (email, через запятую)"
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              type="datetime-local"
-              label="Дата и время"
-              value={dt}
-              onChange={(e) => setDt(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            {err && (
-              <Typography color="error" variant="body2">
-                {err}
-              </Typography>
-            )}
+            <TextField label="Участники (email, через запятую)" value={emails} onChange={(e) => setEmails(e.target.value)} fullWidth />
+            <TextField type="datetime-local" label="Дата и время" value={dt} onChange={(e) => setDt(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+            {err && <Typography color="error" variant="body2">{err}</Typography>}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCreate(false)} disabled={loading}>
-            Отмена
-          </Button>
+          <Button onClick={() => setOpenCreate(false)} disabled={loading}>Отмена</Button>
           <Button
             onClick={handleCreate}
             disabled={loading}

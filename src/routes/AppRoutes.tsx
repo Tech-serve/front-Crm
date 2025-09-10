@@ -4,12 +4,13 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import PrivateLayout from "../layouts/PrivateLayout";
 import PublicLayout  from "../layouts/PublicLayout";
 
-import LoginPage      from "src/common/LoginPage";
-import CandidatesPage from "src/pages/CandidatesPage";
-import EmployeesPage  from "src/pages/EmployeesPage";
-import Dashboard      from "src/pages/Dashboard";
-import ChecklistPage  from "src/pages/ChecklistPage";
-import CalendarPage   from "src/pages/Calendar"; // ← календарь
+import LoginPage        from "src/common/LoginPage";
+import CandidatesPage   from "src/pages/CandidatesPage";
+import EmployeesPage    from "src/pages/EmployeesPage";
+import Dashboard        from "src/pages/Dashboard";
+import ChecklistPage    from "src/pages/ChecklistPage";
+import CalendarPage     from "src/pages/Calendar";
+import EmployeesDashboard from "src/pages/EmployeesDashboard"; // ← новый дашборд сотрудников
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
 
@@ -51,6 +52,18 @@ export function AppRoutes() {
       />
       {/* Алиас на старый/HR-префиксный путь */}
       <Route path="/hr/calendar" element={<Navigate to="/calendar" replace />} />
+
+      {/* Дашборд сотрудников — HR/Head */}
+      <Route
+        path="/hr/employees-dashboard"
+        element={
+          <RequireRoles roles={["hr", "head"]}>
+            <PrivateLayout>
+              <EmployeesDashboard />
+            </PrivateLayout>
+          </RequireRoles>
+        }
+      />
 
       {/* Кандидаты — HR/Head */}
       <Route

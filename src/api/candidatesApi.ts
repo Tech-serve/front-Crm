@@ -26,7 +26,7 @@ type CreateCandidateBody = {
 type UpdateCandidateBody = {
   notes?: string;
   status?: Status;
-  meetLink?: string | null;
+  meetLink?: string | null | undefined;
   phone?: string;
   department?: DepartmentValue;
   position?: string;
@@ -89,6 +89,14 @@ export const candidatesApi = baseApi.injectEndpoints({
       ],
     }),
 
+    deleteCandidateMeet: build.mutation<{ ok: true } | void, string>({
+      query: (id) => ({ url: `/candidates/${id}/meet`, method: "DELETE" }),
+      invalidatesTags: (_res, _err, id) => [
+        { type: "Candidates", id },
+        { type: "Candidates", id: "LIST" },
+      ],
+    }),
+
     getCandidateMetrics: build.query<MetricsResp, { from?: string; to?: string } | void>({
       query: (q) => {
         const params = new URLSearchParams();
@@ -119,6 +127,7 @@ export const {
   useCreateCandidateMutation,
   usePatchCandidateMutation,
   useDeleteCandidateMutation,
+  useDeleteCandidateMeetMutation,
   useGetCandidateMetricsQuery,
   useGetCandidateSnapshotsQuery,
   useFreezeCandidateSnapshotMutation,

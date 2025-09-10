@@ -1,28 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Candidate } from "src/types/domain";
 import {
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Stack,
-  Typography,
-  Link,
-  FormControlLabel,
-  Checkbox,
-  Backdrop,
-  CircularProgress,
-  IconButton,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Box, Stack, Typography, Link, FormControlLabel, Checkbox,
+  Backdrop, CircularProgress, IconButton
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import PhoneInTalkOutlinedIcon from "@mui/icons-material/PhoneInTalkOutlined";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { createMeetWebhook } from "src/api/meetWebhook";
-import { usePatchCandidateMutation } from "src/api/candidatesApi";
+import { usePatchCandidateMutation, useDeleteCandidateMeetMutation } from "src/api/candidatesApi";
 
 type Props = { row: Candidate; url?: string };
 
@@ -31,23 +19,15 @@ function shortMeet(u: string) {
     const { hostname, pathname } = new URL(u);
     const last = pathname.split("/").filter(Boolean).pop() || "";
     return `${hostname}/${last}`;
-  } catch {
-    return u;
-  }
+  } catch { return u; }
 }
 
 function toLocalInputValue(iso?: string) {
   if (!iso) return "";
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
 function toIsoFromLocalInput(v: string) {
   if (!v) return new Date().toISOString();
   const d = new Date(v);
@@ -66,16 +46,13 @@ export default function MidCell({ row, url }: Props) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
 
-  const headIv = useMemo(() => row.interviews?.[0], [row.interviews]);
-  const participantsKey = useMemo(() => (headIv?.participants || []).join(","), [headIv?.participants]);
-
+  const headIv = row.interviews?.[0];
   const [editSummary, setEditSummary] = useState(headIv?.notes || "Собеседование");
   const [editEmails, setEditEmails] = useState<string>(headIv?.participants?.join(", ") || row.email || "");
 
   const [localScheduledAt, setLocalScheduledAt] = useState<string | undefined>(
     headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined
   );
-
   const [editDt, setEditDt] = useState<string>(toLocalInputValue(localScheduledAt || headIv?.scheduledAt));
   const [updateMeet, setUpdateMeet] = useState<boolean>(false);
 
@@ -86,24 +63,22 @@ export default function MidCell({ row, url }: Props) {
   const finalUrl = useMemo(() => localUrl || url, [localUrl, url]);
 
   const [patchCandidate] = usePatchCandidateMutation();
+  const [deleteCandidateMeet] = useDeleteCandidateMeetMutation();
 
   useEffect(() => {
-    const nextIso = headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined;
+    const latestHead = row.interviews?.[0];
+    const nextIso = latestHead?.scheduledAt ? String(latestHead.scheduledAt) : undefined;
     setLocalScheduledAt(nextIso);
-    setEditSummary(headIv?.notes || "Собеседование");
-    setEditEmails(participantsKey || row.email || "");
+    setEditSummary(latestHead?.notes || "Собеседование");
+    setEditEmails(latestHead?.participants?.join(", ") || row.email || "");
     setEditDt(toLocalInputValue(nextIso));
-  }, [row._id, row.updatedAt, headIv?.scheduledAt, headIv?.notes, participantsKey, row.email]);
-
-  useEffect(() => {
     setLocalUrl(url);
-  }, [url]);
+  }, [row._id, row.updatedAt, url, row.email, row.interviews]);
 
   const scheduledLabel = useMemo(() => {
     const iso = localScheduledAt || (headIv?.scheduledAt as any);
     if (!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+    return new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
   }, [localScheduledAt, headIv?.scheduledAt]);
 
   async function handleCreate() {
@@ -150,9 +125,7 @@ export default function MidCell({ row, url }: Props) {
       setOpenCreate(false);
     } catch (e: any) {
       setErr(String(e?.message || e));
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   async function handleEdit() {
@@ -183,32 +156,25 @@ export default function MidCell({ row, url }: Props) {
         setLocalUrl(nextLink);
       }
 
+      const current = headIv || {};
       const nextHead: any = {
         scheduledAt: iso,
-        durationMinutes: (headIv as any)?.durationMinutes ?? 60,
+        durationMinutes: (current as any).durationMinutes ?? 60,
         participants: valids,
-        status: (headIv as any)?.status ?? "not_held",
-        source: (headIv as any)?.source ?? "crm",
+        status: (current as any).status ?? "not_held",
+        source: (current as any).source ?? "crm",
         notes: editSummary,
       };
       if (nextLink) nextHead.meetLink = nextLink;
 
-      // сбрасываем «антиклеймо», чтобы планировщик снова прислал за час
-      // (не переносим старое reminded1hAt в новый объект)
       const tail = (row.interviews || []).slice(1);
-
-      await patchCandidate({
-        id: row._id,
-        body: { meetLink: nextLink ?? undefined, interviews: [nextHead, ...tail] },
-      }).unwrap();
+      await patchCandidate({ id: row._id, body: { meetLink: nextLink ?? undefined, interviews: [nextHead, ...tail] } }).unwrap();
 
       setLocalScheduledAt(iso);
       setOpenEdit(false);
     } catch (e: any) {
       setErr(String(e?.message || e));
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   async function handleDeleteLink() {
@@ -216,28 +182,12 @@ export default function MidCell({ row, url }: Props) {
     setLoading(true);
     setErr(null);
     try {
-      const current = headIv || {};
-      const tail = (row.interviews || []).slice(1);
-      const nextHead: any = {
-        scheduledAt: (current as any).scheduledAt,
-        durationMinutes: (current as any).durationMinutes ?? 60,
-        participants: (current as any).participants || [],
-        status: (current as any).status ?? "not_held",
-        source: (current as any).source ?? "crm",
-        notes: (current as any).notes || "Собеседование",
-      };
-
-      await patchCandidate({
-        id: row._id,
-        body: { meetLink: null, interviews: [nextHead, ...tail] },
-      }).unwrap();
-
+      await deleteCandidateMeet(row._id).unwrap();
       setLocalUrl(undefined);
+      setLocalScheduledAt(undefined);
     } catch (e: any) {
       setErr(String(e?.message || e));
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   if (finalUrl) {
@@ -254,16 +204,8 @@ export default function MidCell({ row, url }: Props) {
             rel="noopener noreferrer"
             underline="none"
             sx={(t) => ({
-              px: 1,
-              py: 0.5,
-              borderRadius: 2,
-              fontWeight: 700,
-              lineHeight: 1.2,
-              minWidth: 0,
-              maxWidth: "100%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              px: 1, py: 0.5, borderRadius: 2, fontWeight: 700, lineHeight: 1.2, minWidth: 0, maxWidth: "100%",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               color: t.palette.primary.main,
               backgroundColor: alpha(t.palette.primary.main, 0.12),
               border: `1px solid ${alpha(t.palette.primary.main, 0.25)}`,
@@ -289,9 +231,10 @@ export default function MidCell({ row, url }: Props) {
             startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <EditCalendarOutlinedIcon />}
             disabled={loading}
             onClick={() => {
-              setEditSummary(headIv?.notes || "Собеседование");
-              setEditEmails(headIv?.participants?.join(", ") || row.email || "");
-              setEditDt(toLocalInputValue(localScheduledAt || headIv?.scheduledAt) || toLocalInputValue(new Date().toISOString()));
+              const latestHead = row.interviews?.[0];
+              setEditSummary(latestHead?.notes || "Собеседование");
+              setEditEmails(latestHead?.participants?.join(", ") || row.email || "");
+              setEditDt(toLocalInputValue(localScheduledAt || latestHead?.scheduledAt) || toLocalInputValue(new Date().toISOString()));
               setUpdateMeet(false);
               setOpenEdit(true);
             }}

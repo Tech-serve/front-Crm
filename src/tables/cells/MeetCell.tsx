@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Candidate } from "src/types/domain";
 import {
   Button,
@@ -15,10 +15,13 @@ import {
   Checkbox,
   Backdrop,
   CircularProgress,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import PhoneInTalkOutlinedIcon from "@mui/icons-material/PhoneInTalkOutlined";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import { createMeetWebhook } from "src/api/meetWebhook";
 import { usePatchCandidateMutation } from "src/api/candidatesApi";
 
@@ -47,9 +50,9 @@ function toLocalInputValue(iso?: string) {
 }
 
 function toIsoFromLocalInput(v: string) {
-  if (!v) return new Date().toISOString();
-  const d = new Date(v); // "YYYY-MM-DDTHH:mm" — это локальное время
-  return d.toISOString(); // правильный UTC без лишних сдвигов
+  const d = v ? new Date(v) : new Date();
+  d.setSeconds(0, 0);
+  return d.toISOString();
 }
 
 export default function MidCell({ row, url }: Props) {
@@ -66,31 +69,40 @@ export default function MidCell({ row, url }: Props) {
     )}:${pad(d.getMinutes())}`;
   });
 
-  const [editSummary, setEditSummary] = useState("Собеседование");
   const headIv = row.interviews?.[0];
 
-  const [editEmails, setEditEmails] = useState<string>(
-    headIv?.participants?.join(", ") || row.email || ""
-  );
+  const [editSummary, setEditSummary] = useState(headIv?.notes || "Собеседование");
+  const [editEmails, setEditEmails] = useState<string>(headIv?.participants?.join(", ") || row.email || "");
 
-  // ⭐ локальная дата «шапки» (чтобы ячейка сразу показывала новое время)
   const [localScheduledAt, setLocalScheduledAt] = useState<string | undefined>(
     headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined
   );
-
-  const [editDt, setEditDt] = useState<string>(
-    toLocalInputValue(localScheduledAt || headIv?.scheduledAt)
-  );
+  const [editDt, setEditDt] = useState<string>(toLocalInputValue(localScheduledAt || headIv?.scheduledAt));
 
   const [updateMeet, setUpdateMeet] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
-  const finalUrl = useMemo(() => localUrl || url, [localUrl, url]);
-
   const [patchCandidate] = usePatchCandidateMutation();
+
+// стало
+const [localUrl, setLocalUrl] = useState<string | undefined>(undefined);
+
+// берём локальное значение если есть, иначе — из кандидата, иначе — из пропса url
+const finalUrl = useMemo(
+  () => localUrl ?? row.meetLink ?? url,
+  [localUrl, row.meetLink, url]
+);
+
+// эффект больше НЕ читает localUrl
+useEffect(() => {
+  const iso = headIv?.scheduledAt ? String(headIv.scheduledAt) : undefined;
+  setLocalScheduledAt(iso);
+  setEditDt(toLocalInputValue(iso));
+  setEditSummary(headIv?.notes || "Собеседование");
+  setEditEmails(headIv?.participants?.join(", ") || row.email || "");
+}, [headIv?.scheduledAt, headIv?.notes, headIv?.participants, row.email]);
 
   const scheduledLabel = useMemo(() => {
     const iso = localScheduledAt || (headIv?.scheduledAt as any);
@@ -125,7 +137,6 @@ export default function MidCell({ row, url }: Props) {
         interviewDate: iso,
       });
 
-      // локально обновляем ссылку и дату (оптимистично)
       setLocalUrl(meetLink);
       setLocalScheduledAt(iso);
 
@@ -168,7 +179,7 @@ export default function MidCell({ row, url }: Props) {
       const iso = toIsoFromLocalInput(editDt);
       const issueKey = `CRM-${row._id ?? Math.random().toString(36).slice(2, 10)}`;
 
-      let nextLink = finalUrl;
+      let nextLink = finalUrl || "";
       if (updateMeet) {
         const candidateEmail = emailRe.test(row.email || "") ? row.email! : valids[0];
         const companyEmails = valids.join(",");
@@ -206,10 +217,30 @@ export default function MidCell({ row, url }: Props) {
         }).unwrap();
       }
 
-      // локально обновим дату, чтобы таблица сразу показала новое время
       setLocalScheduledAt(iso);
-
       setOpenEdit(false);
+    } catch (e: any) {
+      setErr(String(e?.message || e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (loading || !row._id) return;
+    const yes = window.confirm("Удалить текущий мит?");
+    if (!yes) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const tail = (row.interviews || []).slice(1);
+      await patchCandidate({
+        id: row._id,
+        body: { meetLink: "", interviews: tail },
+      }).unwrap();
+      setLocalUrl(undefined);
+      setLocalScheduledAt(undefined);
+      setEditDt("");
     } catch (e: any) {
       setErr(String(e?.message || e));
     } finally {
@@ -220,7 +251,6 @@ export default function MidCell({ row, url }: Props) {
   if (finalUrl) {
     return (
       <>
-        {/* Блокирующий спиннер при любых сетевых действиях */}
         <Backdrop open={loading} sx={(t) => ({ zIndex: t.zIndex.modal + 1, color: "#fff" })}>
           <CircularProgress />
         </Backdrop>
@@ -269,21 +299,12 @@ export default function MidCell({ row, url }: Props) {
 
           <Button
             size="small"
-            startIcon={
-              loading ? (
-                <CircularProgress size={16} thickness={5} />
-              ) : (
-                <EditCalendarOutlinedIcon />
-              )
-            }
+            startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <EditCalendarOutlinedIcon />}
             disabled={loading}
             onClick={() => {
               setEditSummary(headIv?.notes || "Собеседование");
               setEditEmails(headIv?.participants?.join(", ") || row.email || "");
-              setEditDt(
-                toLocalInputValue(localScheduledAt || headIv?.scheduledAt) ||
-                  toLocalInputValue(new Date().toISOString())
-              );
+              setEditDt(toLocalInputValue(localScheduledAt || headIv?.scheduledAt) || toLocalInputValue(new Date().toISOString()));
               setUpdateMeet(false);
               setOpenEdit(true);
             }}
@@ -303,6 +324,14 @@ export default function MidCell({ row, url }: Props) {
           >
             новый
           </Button>
+
+          <Tooltip title="Удалить мит">
+            <span>
+              <IconButton size="small" color="error" onClick={handleDelete} disabled={loading}>
+                <DeleteForeverRoundedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Box>
 
         <Dialog open={openEdit} onClose={() => !loading && setOpenEdit(false)} maxWidth="xs" fullWidth>
@@ -343,13 +372,7 @@ export default function MidCell({ row, url }: Props) {
               onClick={handleEdit}
               disabled={loading}
               variant="contained"
-              startIcon={
-                loading ? (
-                  <CircularProgress size={16} thickness={5} />
-                ) : (
-                  <EditCalendarOutlinedIcon />
-                )
-              }
+              startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <EditCalendarOutlinedIcon />}
               sx={(t) => ({
                 backgroundColor: alpha(t.palette.primary.main, 0.15),
                 color: t.palette.primary.main,
@@ -368,7 +391,6 @@ export default function MidCell({ row, url }: Props) {
 
   return (
     <>
-      {/* Блокирующий спиннер */}
       <Backdrop open={loading} sx={(t) => ({ zIndex: t.zIndex.modal + 1, color: "#fff" })}>
         <CircularProgress />
       </Backdrop>
@@ -376,9 +398,7 @@ export default function MidCell({ row, url }: Props) {
       <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Button
           size="small"
-          startIcon={
-            loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />
-          }
+          startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />}
           disabled={loading}
           onClick={() => setOpenCreate(true)}
           sx={(t) => ({
@@ -435,9 +455,7 @@ export default function MidCell({ row, url }: Props) {
             onClick={handleCreate}
             disabled={loading}
             variant="contained"
-            startIcon={
-              loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />
-            }
+            startIcon={loading ? <CircularProgress size={16} thickness={5} /> : <PhoneInTalkOutlinedIcon />}
             sx={(t) => ({
               backgroundColor: alpha(t.palette.primary.main, 0.15),
               color: t.palette.primary.main,

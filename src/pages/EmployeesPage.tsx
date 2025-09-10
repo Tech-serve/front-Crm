@@ -20,7 +20,7 @@ export default function EmployeesPage() {
       component="main"
       sx={{
         pt: { xs: 0, md: 0 },
-        px: { xs: 1.5, md: 0 }, 
+        px: { xs: 1.5, md: 0 },
         pb: { xs: "calc(72px + env(safe-area-inset-bottom))", md: 0 },
         height: "90dvh",
         display: "flex",
@@ -40,15 +40,17 @@ export default function EmployeesPage() {
         </Typography>
       )}
 
-      <Box
-        sx={{ flex: 1, minHeight: 0, width: "100%", overflow: "hidden" }}
-      >
+      <Box sx={{ flex: 1, minHeight: 0, width: "100%", overflow: "hidden" }}>
         <DataGrid
           rows={rows}
           columns={employeesColumns}
           loading={isLoading}
           getRowId={(r) => (r as Employee)._id}
           disableRowSelectionOnClick
+          /** ✅ добавили класс для уволенных */
+          getRowClassName={(params) =>
+            (params.row as Employee)?.terminatedAt ? "row--terminated" : ""
+          }
           processRowUpdate={async (newRow: GridRowModel, oldRow: GridRowModel) => {
             const n = newRow as Employee;
             const o = oldRow as Employee;
@@ -56,9 +58,9 @@ export default function EmployeesPage() {
             const body: Partial<Employee> = {};
 
             if (n.fullName !== o.fullName) body.fullName = (n.fullName ?? "").trim();
-            if (n.email !== o.email)      body.email    = (n.email ?? "").trim().toLowerCase();
-            if (n.phone !== o.phone)      body.phone    = n.phone ?? "";
-            if (n.notes !== o.notes)      body.notes    = n.notes ?? "";
+            if (n.email !== o.email) body.email = (n.email ?? "").trim().toLowerCase();
+            if (n.phone !== o.phone) body.phone = n.phone ?? "";
+            if (n.notes !== o.notes) body.notes = n.notes ?? "";
 
             if (Object.keys(body).length) {
               if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
@@ -80,17 +82,36 @@ export default function EmployeesPage() {
             "& .MuiDataGrid-virtualScroller": {
               overflowY: "auto",
               paddingBottom: { xs: 1, md: 0 },
-            }, 
+            },
             "& .MuiDataGrid-columnHeaders": {
               borderRadius: { xs: 1, md: 2 },
             },
             "& .dg-center": { justifyContent: "center !important", px: 0 },
-            "& .dg-center .MuiDataGrid-cellContent": { display: "flex", justifyContent: "center", width: "100%", overflow: "visible" },
+            "& .dg-center .MuiDataGrid-cellContent": {
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              overflow: "visible",
+            },
             "& .dg-vcenter": { py: 0, alignItems: "center !important", display: "flex" },
-            "& .dg-vcenter .MuiDataGrid-cellContent": { display: "flex", alignItems: "center", height: "100%" },
+            "& .dg-vcenter .MuiDataGrid-cellContent": {
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+            },
             "& .dg-vcenter .MuiFormControl-root": { margin: 0 },
             "& .dg-vcenter .MuiInputBase-root": { height: 36, alignItems: "center" },
             "& .dg-vcenter input": { textAlign: "center", paddingTop: 0, paddingBottom: 0 },
+
+            "& .MuiDataGrid-row.row--terminated": {
+              backgroundColor: "rgba(239,68,68,0.10)", // прозрачно-красный
+            },
+            "& .MuiDataGrid-row.row--terminated:hover": {
+              backgroundColor: "rgba(239,68,68,0.18)",
+            },
+            "& .MuiDataGrid-row.row--terminated .MuiDataGrid-cell": {
+              borderColor: "rgba(239,68,68,0.20)",
+            },
           }}
         />
       </Box>

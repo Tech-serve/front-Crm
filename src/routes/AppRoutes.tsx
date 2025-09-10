@@ -1,4 +1,3 @@
-// src/routes/AppRoutes.tsx
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import PrivateLayout from "../layouts/PrivateLayout";
@@ -10,7 +9,8 @@ import EmployeesPage    from "src/pages/EmployeesPage";
 import Dashboard        from "src/pages/Dashboard";
 import ChecklistPage    from "src/pages/ChecklistPage";
 import CalendarPage     from "src/pages/Calendar";
-import EmployeesDashboard from "src/pages/EmployeesDashboard"; // ← новый дашборд сотрудников
+import EmployeesDashboard from "src/pages/EmployeesDashboard";
+import SearchPage       from "src/pages/SearchPage";
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
 
@@ -27,13 +27,25 @@ export function AppRoutes() {
         }
       />
 
-      {/* Домашняя страница (доступна всем авторизованным) */}
+      {/* Домашняя страница */}
       <Route
         path="/"
         element={
           <RequireAuth>
             <PrivateLayout>
               <Dashboard />
+            </PrivateLayout>
+          </RequireAuth>
+        }
+      />
+
+      {/* Поиск: для всех авторизованных */}
+      <Route
+        path="/search"
+        element={
+          <RequireAuth>
+            <PrivateLayout>
+              <SearchPage />
             </PrivateLayout>
           </RequireAuth>
         }
@@ -50,20 +62,7 @@ export function AppRoutes() {
           </RequireRoles>
         }
       />
-      {/* Алиас на старый/HR-префиксный путь */}
       <Route path="/hr/calendar" element={<Navigate to="/calendar" replace />} />
-
-      {/* Дашборд сотрудников — HR/Head */}
-      <Route
-        path="/hr/employees-dashboard"
-        element={
-          <RequireRoles roles={["hr", "head"]}>
-            <PrivateLayout>
-              <EmployeesDashboard />
-            </PrivateLayout>
-          </RequireRoles>
-        }
-      />
 
       {/* Кандидаты — HR/Head */}
       <Route
@@ -84,6 +83,18 @@ export function AppRoutes() {
           <RequireRoles roles={["hr", "head"]}>
             <PrivateLayout>
               <EmployeesPage />
+            </PrivateLayout>
+          </RequireRoles>
+        }
+      />
+
+      {/* Дашборд сотрудников — HR/Head */}
+      <Route
+        path="/hr/employees-dashboard"
+        element={
+          <RequireRoles roles={["hr", "head"]}>
+            <PrivateLayout>
+              <EmployeesDashboard />
             </PrivateLayout>
           </RequireRoles>
         }

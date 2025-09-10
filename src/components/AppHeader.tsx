@@ -11,6 +11,8 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import ProfileMenu from "./ProfileMenu";
 import { useAppDispatch, useAppSelector } from "src/store/store";
@@ -32,7 +34,7 @@ const HeaderBar = styled(AppBar)<{ drawerwidth: number }>(({ theme, drawerwidth 
   },
 }));
 
-const SearchWrap = styled("div")(({ theme }) => ({
+const SearchWrap = styled("form")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   gap: 8,
@@ -58,20 +60,70 @@ export default function AppHeader({ drawerWidth }: Props) {
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sp] = useSearchParams();
+
+  // синхронизация значения: если мы на странице /search, подставляем q в инпут
+  const [value, setValue] = useState<string>(location.pathname.startsWith("/search") ? (sp.get("q") ?? "") : "");
+  useEffect(() => {
+    if (location.pathname.startsWith("/search")) {
+      setValue(sp.get("q") ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, sp.toString()]);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Ctrl/Cmd + K — фокус поиска
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const submit = (q: string) => {
+    const query = (q ?? "").trim();
+    navigate(query ? `/search?q=${encodeURIComponent(query)}` : `/search`);
+  };
+
   return (
     <HeaderBar position="fixed" drawerwidth={drawerWidth}>
       <Toolbar sx={{ minHeight: 56, px: { xs: 1, sm: 2 } }}>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, mr: { xs: 1, sm: 3 } }}
-        >
+        <Typography variant="h6" sx={{ fontWeight: 700, mr: { xs: 1, sm: 3 } }}>
           CRM
         </Typography>
 
         <Box sx={{ flex: 1, minWidth: 0, maxWidth: { xs: "100%", sm: 720 } }}>
-          <SearchWrap>
+          <SearchWrap
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(value);
+            }}
+          >
             <SearchRoundedIcon fontSize="small" />
-            <SearchInput placeholder="Поиск (Ctrl + K)" />
+            <SearchInput
+              inputRef={inputRef}
+              placeholder="Поиск (Ctrl + K)"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submit(value);
+                } else if (e.key === "Escape") {
+                  setValue("");
+                }
+              }}
+            />
           </SearchWrap>
         </Box>
 
@@ -99,10 +151,7 @@ export default function AppHeader({ drawerWidth }: Props) {
             </IconButton>
           </Tooltip>
 
-          <ProfileMenu
-            email={user?.email}
-            onLogout={() => dispatch(logout())}
-          />
+          <ProfileMenu email={user?.email} onLogout={() => dispatch(logout())} />
         </Box>
       </Toolbar>
     </HeaderBar>

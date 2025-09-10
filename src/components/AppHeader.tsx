@@ -7,7 +7,6 @@ import Typography from "@mui/material/Typography";
 import Badge from "@mui/material/Badge";
 import InputBase from "@mui/material/InputBase";
 import Tooltip from "@mui/material/Tooltip";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -64,8 +63,10 @@ export default function AppHeader({ drawerWidth }: Props) {
   const location = useLocation();
   const [sp] = useSearchParams();
 
-  // синхронизация значения: если мы на странице /search, подставляем q в инпут
-  const [value, setValue] = useState<string>(location.pathname.startsWith("/search") ? (sp.get("q") ?? "") : "");
+  const [value, setValue] = useState<string>(
+    location.pathname.startsWith("/search") ? (sp.get("q") ?? "") : ""
+  );
+
   useEffect(() => {
     if (location.pathname.startsWith("/search")) {
       setValue(sp.get("q") ?? "");
@@ -78,8 +79,7 @@ export default function AppHeader({ drawerWidth }: Props) {
   // Ctrl/Cmd + K — фокус поиска
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-      if (isCmdOrCtrl && (e.key === "k" || e.key === "K")) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
         inputRef.current?.focus();
         inputRef.current?.select();
@@ -128,15 +128,6 @@ export default function AppHeader({ drawerWidth }: Props) {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1.5 }, ml: { xs: 1, sm: 2 } }}>
-          <Tooltip title="Создать">
-            <IconButton
-              size="small"
-              sx={{ bgcolor: "rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.25)" } }}
-            >
-              <AddRoundedIcon />
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title="Уведомления">
             <IconButton size="small" sx={{ color: "#fff" }}>
               <Badge color="success" variant="dot" overlap="circular">
@@ -146,7 +137,11 @@ export default function AppHeader({ drawerWidth }: Props) {
           </Tooltip>
 
           <Tooltip title="Настройки">
-            <IconButton size="small" sx={{ color: "#fff" }}>
+            <IconButton
+              size="small"
+              sx={{ color: "#fff" }}
+              onClick={() => navigate("/settings")}
+            >
               <SettingsRoundedIcon />
             </IconButton>
           </Tooltip>

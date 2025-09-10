@@ -3,14 +3,15 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import PrivateLayout from "../layouts/PrivateLayout";
 import PublicLayout  from "../layouts/PublicLayout";
 
-import LoginPage        from "src/common/LoginPage";
-import CandidatesPage   from "src/pages/CandidatesPage";
-import EmployeesPage    from "src/pages/EmployeesPage";
-import Dashboard        from "src/pages/Dashboard";
-import ChecklistPage    from "src/pages/ChecklistPage";
-import CalendarPage     from "src/pages/Calendar";
+import LoginPage          from "src/common/LoginPage";
+import CandidatesPage     from "src/pages/CandidatesPage";
+import EmployeesPage      from "src/pages/EmployeesPage";
+import Dashboard          from "src/pages/Dashboard";
+import ChecklistPage      from "src/pages/ChecklistPage";
+import CalendarPage       from "src/pages/Calendar";
 import EmployeesDashboard from "src/pages/EmployeesDashboard";
-import SearchPage       from "src/pages/SearchPage";
+import SearchPage         from "src/pages/SearchPage";
+import SettingsPage       from "src/pages/SettingsPage";
 
 import { RequireAuth, RequireRoles } from "src/config/guards";
 
@@ -39,13 +40,25 @@ export function AppRoutes() {
         }
       />
 
-      {/* Поиск: для всех авторизованных */}
+      {/* Глобальный поиск */}
       <Route
         path="/search"
         element={
           <RequireAuth>
             <PrivateLayout>
               <SearchPage />
+            </PrivateLayout>
+          </RequireAuth>
+        }
+      />
+
+      {/* Настройки (для всех авторизованных) */}
+      <Route
+        path="/settings"
+        element={
+          <RequireAuth>
+            <PrivateLayout>
+              <SettingsPage />
             </PrivateLayout>
           </RequireAuth>
         }

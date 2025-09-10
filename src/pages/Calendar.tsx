@@ -1,4 +1,3 @@
-// src/pages/Calendar.tsx
 import { useMemo, useState } from "react";
 import {
   Box, Card, CardContent, Typography, IconButton, Chip, Stack, Tooltip, Divider,
@@ -142,7 +141,7 @@ export default function CalendarPage() {
   const rangeStart = useMemo(() => startOfView(focus, mode), [focus, mode]);
   const rangeEnd = useMemo(() => endOfView(focus, mode), [focus, mode]);
 
-  // Сбор событий с дедупликацией ссылок
+  // Сбор событий с дедупликацией ссылок; миты без ссылки — не показываем
   const events = useMemo<CalEvent[]>(() => {
     const out: CalEvent[] = [];
     const seenLinks = new Set<string>();
@@ -164,10 +163,10 @@ export default function CalendarPage() {
       }
     }
 
-    // Интервью
+    // Интервью — показываем только если есть валидная ссылка
     for (const cand of candidates) {
       const baseId = cand._id ?? (cand as any).id ?? String(Math.random());
-      const baseLink = cand.meetLink ?? undefined;
+      const baseLink = (cand.meetLink ?? undefined) || undefined;
 
       const interviews = Array.isArray(cand.interviews) ? cand.interviews : [];
       for (let i = 0; i < interviews.length; i++) {
@@ -176,7 +175,9 @@ export default function CalendarPage() {
         if (!when || !when.isValid()) continue;
         if (when.isBefore(rangeStart) || when.isAfter(rangeEnd)) continue;
 
-        const link = iv?.meetLink ?? baseLink;
+        const link = (iv?.meetLink ?? baseLink) || undefined;
+        if (!link) continue; // ключевое: мит без ссылки не отображаем
+
         const key = normalizeMeetLink(link);
         if (key && seenLinks.has(key)) continue;
         if (key) seenLinks.add(key);
@@ -187,7 +188,7 @@ export default function CalendarPage() {
           date: toYMD(when),
           time: when.format("HH:mm"),
           title: cand.fullName ?? "Кандидат",
-          link: link ?? undefined,
+          link,
         });
       }
     }
@@ -327,7 +328,6 @@ function MonthView({
     <Box
       sx={{
         display: "grid",
-        // фиксируем ширину колонок: содержимое больше не растянет
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
         gap: 0.5,
         minWidth: 0,
@@ -368,7 +368,6 @@ function MonthView({
               </Typography>
             </Box>
 
-            {/* Список событий с ограничением по высоте */}
             <Box sx={{ mt: 0.5, overflowY: "auto", maxHeight: 92, pr: 0.5, minWidth: 0 }}>
               <Stack spacing={0.5}>
                 {ev.map((e) => <EventBand key={e.id} e={e} />)}
@@ -461,7 +460,7 @@ function DayView({
   );
 }
 
-/* ===== Плашка события (фикс ширины + обрезка ссылки) ===== */
+/* ===== Плашка события ===== */
 function EventBand({ e }: { e: CalEvent }) {
   const palette = e.kind === "birthday" ? EVENT_COLORS.birthday : EVENT_COLORS.meet;
 
@@ -473,7 +472,7 @@ function EventBand({ e }: { e: CalEvent }) {
         alignItems: "center",
         gap: 1,
         px: 1,
-        height: 38,                 // не растягиваем по высоте
+        height: 38,
         borderRadius: 1,
         bgcolor: palette.bg,
         color: palette.fg,

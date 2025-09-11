@@ -1,5 +1,4 @@
-// frontend/src/types/domain.ts
-
+// src/types/domain.ts
 export type Role = "hr" | "buyer" | "head";
 
 export interface User {
@@ -8,12 +7,7 @@ export interface User {
   token?: string;
 }
 
-export type InterviewStatus =
-  | "not_held"
-  | "success"
-  | "declined"
-  | "reserve"
-  | "canceled";
+export type InterviewStatus = "not_held" | "success" | "declined" | "reserve" | "canceled";
 
 export interface Interview {
   _id?: string;
@@ -63,15 +57,13 @@ export interface Candidate {
   declinedAt?: string | null;
   canceledAt?: string | null;
   polygraphAddress?: string;
-  location?: string;           // ← добавлено для фильтра по локации на дашборде
   createdAt?: string;
   updatedAt?: string;
 }
 
-/** Нужен для EmployeesDashboard */
 export interface Employee {
   _id: string;
-  candidate?: string;          // id кандидата, если связан
+  candidate?: string;
   fullName: string;
   email: string;
   phone?: string;

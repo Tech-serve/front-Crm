@@ -1,4 +1,5 @@
 // frontend/src/types/domain.ts
+
 export type Role = "hr" | "buyer" | "head";
 
 export interface User {
@@ -7,7 +8,12 @@ export interface User {
   token?: string;
 }
 
-export type InterviewStatus = "not_held" | "success" | "declined" | "reserve" | "canceled";
+export type InterviewStatus =
+  | "not_held"
+  | "success"
+  | "declined"
+  | "reserve"
+  | "canceled";
 
 export interface Interview {
   _id?: string;
@@ -20,7 +26,14 @@ export interface Interview {
   notes?: string;
 }
 
-export type DepartmentValue = "Gambling" | "Sweeps" | "Search" | "Vitehi" | "Tech" | "Admin";
+export type DepartmentValue =
+  | "Gambling"
+  | "Sweeps"
+  | "Search"
+  | "Vitehi"
+  | "Tech"
+  | "TechaDeals"
+  | "Admin";
 
 export type PositionValue =
   | "Head"
@@ -31,7 +44,8 @@ export type PositionValue =
   | "Administrator"
   | "CTO"
   | "Translator"
-  | "Frontend";
+  | "Frontend"
+  | "FarmerTech";
 
 export interface Candidate {
   _id: string;
@@ -42,13 +56,31 @@ export interface Candidate {
   status?: InterviewStatus;
   meetLink?: string;
   department?: DepartmentValue;
-  position?: PositionValue;
+  position?: PositionValue | null;
   interviews?: Interview[];
-  polygraphAt?: string;
-  acceptedAt?: string;
-  declinedAt?: string;
-  canceledAt?: string;
+  polygraphAt?: string | null;
+  acceptedAt?: string | null;
+  declinedAt?: string | null;
+  canceledAt?: string | null;
   polygraphAddress?: string;
+  location?: string;           // ← добавлено для фильтра по локации на дашборде
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Нужен для EmployeesDashboard */
+export interface Employee {
+  _id: string;
+  candidate?: string;          // id кандидата, если связан
+  fullName: string;
+  email: string;
+  phone?: string;
+  birthdayAt?: string | null;
+  department: DepartmentValue;
+  position: PositionValue | null;
+  notes?: string;
+  hiredAt: string;
+  terminatedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

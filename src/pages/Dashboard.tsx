@@ -1,4 +1,4 @@
-// src/pages/Dashboard.tsx
+// src/pages/EmployeesDashboard.tsx
 import { useMemo, useState } from "react";
 import {
   Box,
@@ -25,16 +25,24 @@ import {
   Legend,
 } from "recharts";
 
-import { useGetCandidatesQuery } from "src/api/candidatesApi";
-import type { Candidate } from "src/types/domain";
+import { useGetEmployeesQuery } from "src/api/employeesApi";
+import type { Employee } from "src/types/domain";
 import { DEPARTMENTS } from "src/config/departmentConfig";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 
-/* ================== локальные типы ================== */
-// Ключи отделов из POSITION_OPTIONS (типобезопасно, без импорта DepartmentValue)
+/* ===== Локальные типы/хелперы для безопасной индексации ===== */
+// Ключи отделов прямо из POSITION_OPTIONS (без импорта чужих типов)
 type DepartmentKey = keyof typeof POSITION_OPTIONS;
-// Опция должности для выбранного отдела
 type PositionOption = (typeof POSITION_OPTIONS)[DepartmentKey][number];
+
+// Безопасное приведение потенциальной строки к ключу словаря отделов.
+// Если значение не совпало — вернём "Gambling" по умолчанию.
+const asDeptKey = (v: unknown): DepartmentKey => {
+  if (typeof v === "string" && v in POSITION_OPTIONS) {
+    return v as DepartmentKey;
+  }
+  return "Gambling";
+};
 
 /* ===== стили селектов как в таблицах ===== */
 const WIDTH = 160;
@@ -58,30 +66,13 @@ const Dot = ({ color }: { color: string }) => (
   <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color }} />
 );
 
-/* ===== цвета/лейблы статусов ===== */
+/* ===== Цвета/лейблы событий ===== */
 const COLORS = {
-  not_held: "#3498db",   // В процессе (считаем только в день/месяц создания)
-  reserve:  "#f4a261",   // Полиграф
-  success:  "#2ecc71",   // Принято
-  declined: "#ff6b6b",   // Отказано
-  canceled: "#95a5a6",   // Отказался
+  hired: "#2ecc71",      // Принято
+  terminated: "#ff6b6b", // Уволено
 } as const;
 
-const LABEL = {
-  not_held: "В процессе",
-  reserve:  "Полиграф",
-  success:  "Принято",
-  declined: "Отказано",
-  canceled: "Отказался",
-} as const;
-
-type BucketKey = keyof typeof LABEL;
-
-/* ===== строки для графиков ===== */
-type DailyRow = { day: string } & Record<BucketKey, number>;
-type EventRow = { month: string; polygraph: number; accepted: number; declined: number; canceled: number};
-
-/* ===== утилиты дат ===== */
+/* ===== Даты ===== */
 const YM = (d: Dayjs) => d.format("YYYY-MM");
 function isSameMonth(a: Dayjs, b: Dayjs) { return a.year() === b.year() && a.month() === b.month(); }
 function isSameOrBeforeMonth(a: Dayjs, b: Dayjs) { return a.year() < b.year() || (a.year() === b.year() && a.month() <= b.month()); }
@@ -92,21 +83,23 @@ function isBetweenInclusive(d: unknown, start: Dayjs, end: Dayjs) {
   return v.isAfter(start.subtract(1, "second")) && v.isBefore(end.add(1, "second"));
 }
 
-export default function Dashboard() {
+/* ===== Типы рядов для графиков ===== */
+type DailyRow = { day: string; hired: number; terminated: number };
+type MonthlyRow = { month: string; hired: number; terminated: number };
+
+export default function EmployeesDashboard() {
   const now = dayjs();
   const nowMonth = now.startOf("month");
   const [month, setMonth] = useState<Dayjs>(nowMonth);
 
-  // данные
-  const { data: page } = useGetCandidatesQuery({ page: 1, pageSize: 1000 });
-  const candidates = useMemo(() => ((page?.items as Candidate[]) ?? []), [page?.items]);
+  // данные сотрудников
+  const { data: page } = useGetEmployeesQuery({ page: 1, pageSize: 1000 });
+  const employees = useMemo(() => ((page?.items as Employee[]) ?? []), [page?.items]);
 
-  /* ===== фильтры: Отдел + Должность + Локация ===== */
+  /* ===== Фильтры: Отдел + Должность ===== */
   const [department, setDepartment] = useState<string>("all");
   const [position, setPosition] = useState<string>("all");
-  const [location, setLocation] = useState<string>("all");
 
-  // DEPARTMENTS приводим к единому виду для селекта
   const deptOptions = useMemo(
     () =>
       (DEPARTMENTS as readonly any[]).map((d) => ({
@@ -122,61 +115,47 @@ export default function Dashboard() {
   // Типобезопасный доступ к POSITION_OPTIONS
   const posOptions: readonly PositionOption[] = useMemo(() => {
     if (department === "all") return Object.values(POSITION_OPTIONS).flat();
-    const key = department as DepartmentKey;
-    return POSITION_OPTIONS[key] ?? [];
+    return POSITION_OPTIONS[asDeptKey(department)] ?? [];
   }, [department]);
 
-  // Локации собираем из данных
-  const locationOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const c of candidates) {
-      const v = String((c as any).location ?? "").trim();
-      if (v) set.add(v);
-    }
-    return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [candidates]);
-
-  // Применяем фильтры к кандидатам
-  const filteredCandidates = useMemo(() => {
+  const filtered = useMemo(() => {
     const dep = department.toLowerCase();
     const pos = position.toLowerCase();
-    const loc = location.toLowerCase();
-
-    return candidates.filter((c) => {
+    return employees.filter((e) => {
       const depOk =
         department === "all" ||
-        String((c as any).department ?? "").toLowerCase() === dep;
-
+        String((e as any).department ?? "").toLowerCase() === dep;
       const posOk =
         position === "all" ||
-        String((c as any).position ?? "").toLowerCase() === pos;
-
-      const locOk =
-        location === "all" ||
-        String((c as any).location ?? "").toLowerCase() === loc;
-
-      return depOk && posOk && locOk;
+        String((e as any).position ?? "").toLowerCase() === pos;
+      return depOk && posOk;
     });
-  }, [candidates, department, position, location]);
+  }, [employees, department, position]);
 
-  /* ===== KPI «статус на период» (по выбранному месяцу) ===== */
-  const periodCounts = useMemo(() => {
+  /* ===== KPI по выбранному месяцу ===== */
+  const kpi = useMemo(() => {
     const start = month.startOf("month");
     const end = month.endOf("month");
-    const res: Record<BucketKey, number> = { not_held: 0, reserve: 0, success: 0, declined: 0, canceled: 0 };
 
-    for (const c of filteredCandidates) {
-      if (isBetweenInclusive((c as any).acceptedAt, start, end))  { res.success  += 1; continue; }
-      if (isBetweenInclusive((c as any).declinedAt, start, end))  { res.declined += 1; continue; }
-      if (isBetweenInclusive((c as any).canceledAt, start, end))  { res.canceled += 1; continue; }
-      if (isBetweenInclusive((c as any).polygraphAt, start, end)) { res.reserve  += 1; continue; }
-      // «В процессе» — ТОЛЬКО если создан в этом месяце
-      if (isBetweenInclusive((c as any).createdAt, start, end))   { res.not_held += 1; }
+    let hired = 0;
+    let terminated = 0;
+    let active = 0; // активные на конец месяца
+
+    for (const e of filtered) {
+      if (isBetweenInclusive((e as any).hiredAt, start, end)) hired += 1;
+      if (isBetweenInclusive((e as any).terminatedAt, start, end)) terminated += 1;
+
+      // активен, если нанят до конца периода и не уволен до конца периода
+      const hiredBeforeOrIn = !!(e as any).hiredAt && dayjs((e as any).hiredAt).isBefore(end.add(1, "second"));
+      const notTerminatedByEnd =
+        !(e as any).terminatedAt || dayjs((e as any).terminatedAt).isAfter(end);
+      if (hiredBeforeOrIn && notTerminatedByEnd) active += 1;
     }
-    return res;
-  }, [filteredCandidates, month]);
 
-  /* ===== Снимок статусов по ДНЯМ выбранного месяца ===== */
+    return { hired, terminated, active };
+  }, [filtered, month]);
+
+  /* ===== График по ДНЯМ выбранного месяца ===== */
   const dailyBars = useMemo<DailyRow[]>(() => {
     const start = month.startOf("month");
     const end   = month.endOf("month");
@@ -186,40 +165,38 @@ export default function Dashboard() {
     return days.map((d) => {
       const dStart = d.startOf("day");
       const dEnd   = d.endOf("day");
-      const row: DailyRow = { day: d.format("DD"), not_held: 0, reserve: 0, success: 0, declined: 0, canceled: 0 };
+      let hired = 0;
+      let terminated = 0;
 
-      for (const c of filteredCandidates) {
-        if (isBetweenInclusive((c as any).acceptedAt,  dStart, dEnd)) { row.success  += 1; continue; }
-        if (isBetweenInclusive((c as any).declinedAt,  dStart, dEnd)) { row.declined += 1; continue; }
-        if (isBetweenInclusive((c as any).canceledAt,  dStart, dEnd)) { row.canceled += 1; continue; }
-        if (isBetweenInclusive((c as any).polygraphAt, dStart, dEnd)) { row.reserve  += 1; continue; }
-        if (isBetweenInclusive((c as any).createdAt,   dStart, dEnd)) { row.not_held += 1; } // только день создания
+      for (const e of filtered) {
+        if (isBetweenInclusive((e as any).hiredAt, dStart, dEnd)) hired += 1;
+        if (isBetweenInclusive((e as any).terminatedAt, dStart, dEnd)) terminated += 1;
       }
-      return row;
+      return { day: d.format("DD"), hired, terminated };
     });
-  }, [filteredCandidates, month]);
+  }, [filtered, month]);
 
-  /* ===== «События по МЕСЯЦАМ» (как было) ===== */
-  const eventBars = useMemo<EventRow[]>(() => {
-    const map = new Map<string, EventRow>();
-
-    for (const p of filteredCandidates) {
-      if ((p as any).polygraphAt) addEvent(map, YM(dayjs((p as any).polygraphAt)), "polygraph");
-      if ((p as any).acceptedAt)  addEvent(map, YM(dayjs((p as any).acceptedAt)),  "accepted");
-      if ((p as any).declinedAt)  addEvent(map, YM(dayjs((p as any).declinedAt)),  "declined");
-      if ((p as any).canceledAt)  addEvent(map, YM(dayjs((p as any).canceledAt)),  "canceled");
-    }
-
+  /* ===== График по МЕСЯЦАМ с начала года ===== */
+  const monthlyBars = useMemo<MonthlyRow[]>(() => {
     const start = dayjs().startOf("year");
+    const map = new Map<string, MonthlyRow>();
+    // заполним все месяцы до текущего
     for (let cur = start; isSameOrBeforeMonth(cur, nowMonth); cur = cur.add(1, "month")) {
-      const key = YM(cur);
-      if (!map.has(key)) map.set(key, { month: key, polygraph: 0, accepted: 0, declined: 0, canceled: 0 });
+      const m = YM(cur);
+      map.set(m, { month: m, hired: 0, terminated: 0 });
     }
-
-    return Array.from(map.values())
-      .filter((r) => isSameOrBeforeMonth(dayjs(r.month + "-01"), nowMonth))
-      .sort((a, b) => a.month.localeCompare(b.month));
-  }, [filteredCandidates, nowMonth]);
+    for (const e of filtered) {
+      if ((e as any).hiredAt) {
+        const m = YM(dayjs((e as any).hiredAt));
+        if (map.has(m)) map.get(m)!.hired += 1;
+      }
+      if ((e as any).terminatedAt) {
+        const m = YM(dayjs((e as any).terminatedAt));
+        if (map.has(m)) map.get(m)!.terminated += 1;
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.month.localeCompare(b.month));
+  }, [filtered, nowMonth]);
 
   const prevMonth = () => setMonth((m) => m.subtract(1, "month"));
   const nextMonth = () => setMonth((m) => (isSameMonth(m, nowMonth) ? m : m.add(1, "month")));
@@ -232,37 +209,22 @@ export default function Dashboard() {
     );
   }, [department, deptOptions]);
 
-  // фон для селекта должности — в цвет текущей вертикали; белый текст
   const positionBg = department === "all" ? "#475569" : currentDept.bg;
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      {/* Заголовок без большого отступа */}
-      <Typography variant="h5" sx={{ mb: 1 }}>Дашборд кандидатов</Typography>
+      <Typography variant="h5" sx={{ mb: 1 }}>Дашборд сотрудников</Typography>
 
-      {/* ---- ШАПКА: фильтры и период ---- */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          mb: 2,
-          flexWrap: "wrap",
-        }}
-      >
+      {/* Шапка: фильтры и период */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
         {/* Левая группа: селекты */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 480 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 360 }}>
           {/* Отдел */}
           <CompactSelect
             size="small"
             value={department}
             onChange={(e) => { setDepartment(String(e.target.value)); setPosition("all"); }}
-            sx={{
-              width: WIDTH,
-              bgcolor: currentDept.bg,
-              color: "#fff",
-              "& .MuiSvgIcon-root": { color: "#fff" },
-            }}
+            sx={{ width: WIDTH, bgcolor: currentDept.bg, color: "#fff", "& .MuiSvgIcon-root": { color: "#fff" } }}
             MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
           >
             <MenuItem value="all">
@@ -284,36 +246,12 @@ export default function Dashboard() {
             size="small"
             value={position}
             onChange={(e) => setPosition(String(e.target.value))}
-            sx={{
-              width: WIDTH,
-              bgcolor: positionBg,
-              color: "#fff",
-              "& .MuiSvgIcon-root": { color: "#fff" },
-            }}
+            sx={{ width: WIDTH, bgcolor: positionBg, color: "#fff", "& .MuiSvgIcon-root": { color: "#fff" } }}
             MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
           >
             <MenuItem value="all">Все</MenuItem>
             {posOptions.map((p) => (
               <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
-            ))}
-          </CompactSelect>
-
-          {/* Локация */}
-          <CompactSelect
-            size="small"
-            value={location}
-            onChange={(e) => setLocation(String(e.target.value))}
-            sx={{
-              width: WIDTH,
-              bgcolor: "#475569",
-              color: "#fff",
-              "& .MuiSvgIcon-root": { color: "#fff" },
-            }}
-            MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
-          >
-            <MenuItem value="all">Все локации</MenuItem>
-            {locationOptions.filter((v) => v !== "all").map((v) => (
-              <MenuItem key={v} value={v}>{v}</MenuItem>
             ))}
           </CompactSelect>
         </Box>
@@ -324,10 +262,7 @@ export default function Dashboard() {
             <ChevronLeftRoundedIcon fontSize="small" />
           </IconButton>
 
-          <Chip
-            label={month.format("MM.YYYY")}
-            sx={{ bgcolor: "#1f2937", color: "#fff", fontWeight: 500 }}
-          />
+          <Chip label={month.format("MM.YYYY")} sx={{ bgcolor: "#1f2937", color: "#fff", fontWeight: 500 }} />
 
           <IconButton size="small" onClick={nextMonth} sx={{ color: "#fff", bgcolor: "#1f2937", "&:hover": { bgcolor: "#111827" } }}>
             <ChevronRightRoundedIcon fontSize="small" />
@@ -341,25 +276,22 @@ export default function Dashboard() {
           />
         </Box>
       </Box>
-      {/* ---- /ШАПКА ---- */}
 
       {/* KPI */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>Статус на период</Typography>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Итоги за {month.format("MM.YYYY")}</Typography>
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(5,1fr)" },
+              gridTemplateColumns: { xs: "repeat(3,1fr)", sm: "repeat(3,1fr)", md: "repeat(3,1fr)" },
               gap: 2,
             }}
           >
             {[
-              { key: "not_held" as const, color: COLORS.not_held, label: LABEL.not_held, value: periodCounts.not_held },
-              { key: "reserve"  as const, color: COLORS.reserve,  label: LABEL.reserve,  value: periodCounts.reserve },
-              { key: "success"  as const, color: COLORS.success,  label: LABEL.success,  value: periodCounts.success },
-              { key: "declined" as const, color: COLORS.declined, label: LABEL.declined, value: periodCounts.declined },
-              { key: "canceled" as const, color: COLORS.canceled, label: LABEL.canceled, value: periodCounts.canceled },
+              { key: "hired" as const, color: COLORS.hired, label: "Принято", value: kpi.hired },
+              { key: "terminated" as const, color: COLORS.terminated, label: "Уволено", value: kpi.terminated },
+              { key: "active" as const, color: "#3498db", label: "Активно на конец месяца", value: kpi.active },
             ].map((k) => (
               <Card key={k.key} variant="outlined" sx={{ borderTop: `3px solid ${k.color}` }}>
                 <CardContent>
@@ -372,10 +304,10 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* График #1: по ДНЯМ выбранного месяца (stacked) */}
+      {/* График 1: по дням месяца */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant="subtitle1" mb={2}>Снимок статусов по дням (месяц {month.format("MM.YYYY")})</Typography>
+          <Typography variant="subtitle1" mb={2}>События по дням (месяц {month.format("MM.YYYY")})</Typography>
           <Box sx={{ width: "100%", height: 340 }}>
             <ResponsiveContainer>
               <BarChart data={dailyBars}>
@@ -384,36 +316,28 @@ export default function Dashboard() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="not_held" name={LABEL.not_held} stackId="d" fill={COLORS.not_held} />
-                <Bar dataKey="reserve"  name={LABEL.reserve}  stackId="d" fill={COLORS.reserve} />
-                <Bar dataKey="success"  name={LABEL.success}  stackId="d" fill={COLORS.success} />
-                <Bar dataKey="declined" name={LABEL.declined} stackId="d" fill={COLORS.declined} />
-                <Bar dataKey="canceled" name={LABEL.canceled} stackId="d" fill={COLORS.canceled} />
+                <Bar dataKey="hired" name="Принято" fill={COLORS.hired} />
+                <Bar dataKey="terminated" name="Уволено" fill={COLORS.terminated} />
               </BarChart>
             </ResponsiveContainer>
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-            «В процессе» учитывается только в день создания кандидата.
-          </Typography>
         </CardContent>
       </Card>
 
-      {/* График #2: события по МЕСЯЦАМ (как было) */}
+      {/* График 2: по месяцам (YTD) */}
       <Card>
         <CardContent>
           <Typography variant="subtitle1" mb={2}>События по месяцам</Typography>
           <Box sx={{ width: "100%", height: 320 }}>
             <ResponsiveContainer>
-              <BarChart data={eventBars}>
+              <BarChart data={monthlyBars}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="polygraph" name="Полиграф"  fill={COLORS.reserve} />
-                <Bar dataKey="accepted"  name="Принято"   fill={COLORS.success} />
-                <Bar dataKey="declined"  name="Отказано"  fill={COLORS.declined} />
-                <Bar dataKey="canceled"  name="Отказался" fill={COLORS.canceled} />
+                <Bar dataKey="hired" name="Принято" fill={COLORS.hired} />
+                <Bar dataKey="terminated" name="Уволено" fill={COLORS.terminated} />
               </BarChart>
             </ResponsiveContainer>
           </Box>
@@ -421,17 +345,4 @@ export default function Dashboard() {
       </Card>
     </Box>
   );
-}
-
-/* ===== helpers для нижнего графика ===== */
-function addEvent(
-  map: Map<string, EventRow>,
-  month: string,
-  key: keyof Omit<EventRow, "month">
-) {
-  if (!map.has(month)) {
-    map.set(month, { month, polygraph: 0, accepted: 0, declined: 0, canceled: 0 });
-  }
-  const row = map.get(month)!;
-  row[key] += 1;
 }

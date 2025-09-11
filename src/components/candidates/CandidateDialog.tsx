@@ -7,7 +7,7 @@ import type { SlideProps } from "@mui/material/Slide";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { type Dayjs } from "dayjs";
+import { type Dayjs } from "dayjs";
 import { HR_STATUS_OPTIONS } from "src/config/statusConfig";
 import { DEPARTMENTS } from "src/config/departmentConfig";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
@@ -53,7 +53,7 @@ export default function CandidateDialog({ open, onClose, mode = "candidate" }: P
         email,
         phone: phone || undefined,
         department,
-        position: position ? position : null,
+        position: position || undefined, // FIX: было null → undefined, чтобы пройти zod enum
         notes,
         birthdayAt: birthday ? birthday.startOf("day").toISOString() : null,
       }).unwrap();

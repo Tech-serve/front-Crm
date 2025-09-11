@@ -25,6 +25,8 @@ export const POSITION_OPTIONS: Record<string, { value: string; label: string }[]
   Tech: [
     { value: "CTO", label: "CTO" },           
     { value: "Translator", label: "Translator" }, 
-    { value: "Frontend", label: "Frontend" }, 
+    { value: "Frontend", label: "Frontend" },
+    { value: "FarmerTech", label: "Farmer Tech" },
+
   ],
 } as const;

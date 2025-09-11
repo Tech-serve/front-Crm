@@ -41,7 +41,7 @@ const candidatesColumns: GridColDef[] = [
   {
     field: "scheduledAtText",
     headerName: "Когда",
-    width: 110,
+    width: 200,
     sortable: false,
     renderCell: (p) => <WhenCell row={p.row as any} />,
   },

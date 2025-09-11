@@ -31,17 +31,15 @@ import { DEPARTMENTS } from "src/config/departmentConfig";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 
 /* ===== Локальные типы/хелперы для безопасной индексации ===== */
-// Ключи отделов прямо из POSITION_OPTIONS (без импорта чужих типов)
 type DepartmentKey = keyof typeof POSITION_OPTIONS;
 type PositionOption = (typeof POSITION_OPTIONS)[DepartmentKey][number];
 
-// Безопасное приведение потенциальной строки к ключу словаря отделов.
-// Если значение не совпало — вернём "Gambling" по умолчанию.
+// Безопасно приводим произвольную строку к ключу словаря отделов.
+// Если отдел неизвестен — дефолтим к "Gambling".
 const asDeptKey = (v: unknown): DepartmentKey => {
-  if (typeof v === "string" && v in POSITION_OPTIONS) {
-    return v as DepartmentKey;
-  }
-  return "Gambling";
+  return typeof v === "string" && v in POSITION_OPTIONS
+    ? (v as DepartmentKey)
+    : "Gambling";
 };
 
 /* ===== стили селектов как в таблицах ===== */
@@ -75,7 +73,9 @@ const COLORS = {
 /* ===== Даты ===== */
 const YM = (d: Dayjs) => d.format("YYYY-MM");
 function isSameMonth(a: Dayjs, b: Dayjs) { return a.year() === b.year() && a.month() === b.month(); }
-function isSameOrBeforeMonth(a: Dayjs, b: Dayjs) { return a.year() < b.year() || (a.year() === b.year() && a.month() <= b.month()); }
+function isSameOrBeforeMonth(a: Dayjs, b: Dayjs) {
+  return a.year() < b.year() || (a.year() === b.year() && a.month() <= b.month());
+}
 function isBetweenInclusive(d: unknown, start: Dayjs, end: Dayjs) {
   if (!d) return false;
   const v = dayjs(d as string);
@@ -112,12 +112,13 @@ export default function EmployeesDashboard() {
     []
   );
 
-  // Типобезопасный доступ к POSITION_OPTIONS
+  // ⚙️ Типобезопасный доступ к POSITION_OPTIONS — НЕТ индексации по string
   const posOptions: readonly PositionOption[] = useMemo(() => {
     if (department === "all") return Object.values(POSITION_OPTIONS).flat();
     return POSITION_OPTIONS[asDeptKey(department)] ?? [];
   }, [department]);
 
+  // Применяем фильтры
   const filtered = useMemo(() => {
     const dep = department.toLowerCase();
     const pos = position.toLowerCase();
@@ -146,7 +147,8 @@ export default function EmployeesDashboard() {
       if (isBetweenInclusive((e as any).terminatedAt, start, end)) terminated += 1;
 
       // активен, если нанят до конца периода и не уволен до конца периода
-      const hiredBeforeOrIn = !!(e as any).hiredAt && dayjs((e as any).hiredAt).isBefore(end.add(1, "second"));
+      const hiredBeforeOrIn =
+        !!(e as any).hiredAt && dayjs((e as any).hiredAt).isBefore(end.add(1, "second"));
       const notTerminatedByEnd =
         !(e as any).terminatedAt || dayjs((e as any).terminatedAt).isAfter(end);
       if (hiredBeforeOrIn && notTerminatedByEnd) active += 1;

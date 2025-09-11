@@ -7,7 +7,7 @@ import { loginByEmail } from "src/features/auth/authSlice";
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const nav = useNavigate();
-  const [email, setEmail] = useState("anna.hr@traffic-jet.com");
+  const [email, setEmail] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   function submit(e: React.FormEvent) {

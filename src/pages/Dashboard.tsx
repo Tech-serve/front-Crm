@@ -26,7 +26,7 @@ import {
 } from "recharts";
 
 import { useGetCandidatesQuery } from "src/api/candidatesApi";
-import type { Candidate } from "src/types/domain";
+import type { Candidate, DepartmentValue } from "src/types/domain";
 import { DEPARTMENTS } from "src/config/departmentConfig";
 import { POSITION_OPTIONS } from "src/config/positionConfig";
 
@@ -92,9 +92,10 @@ export default function Dashboard() {
   const { data: page } = useGetCandidatesQuery({ page: 1, pageSize: 1000 });
   const candidates = useMemo(() => ((page?.items as Candidate[]) ?? []), [page?.items]);
 
-  /* ===== фильтры: Отдел + Должность (визуально как в ячейке) ===== */
+  /* ===== фильтры: Отдел + Должность + Локация ===== */
   const [department, setDepartment] = useState<string>("all");
   const [position, setPosition] = useState<string>("all");
+  const [location, setLocation] = useState<string>("all");
 
   const deptOptions = useMemo(
     () =>
@@ -108,24 +109,44 @@ export default function Dashboard() {
     []
   );
 
+  // ⚙️ Типобезопасный доступ к POSITION_OPTIONS
   const posOptions = useMemo(() => {
     if (department === "all") return Object.values(POSITION_OPTIONS).flat();
-    return POSITION_OPTIONS[department] ?? [];
+    const key = department as DepartmentValue;
+    return POSITION_OPTIONS[key] ?? [];
   }, [department]);
+
+  // Список локаций из данных
+  const locationOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of candidates) {
+      const v = String((c as any).location ?? "").trim();
+      if (v) set.add(v);
+    }
+    return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [candidates]);
 
   const filteredCandidates = useMemo(() => {
     const dep = department.toLowerCase();
     const pos = position.toLowerCase();
+    const loc = location.toLowerCase();
+
     return candidates.filter((c) => {
       const depOk =
         department === "all" ||
         String((c as any).department ?? "").toLowerCase() === dep;
+
       const posOk =
         position === "all" ||
         String((c as any).position ?? "").toLowerCase() === pos;
-      return depOk && posOk;
+
+      const locOk =
+        location === "all" ||
+        String((c as any).location ?? "").toLowerCase() === loc;
+
+      return depOk && posOk && locOk;
     });
-  }, [candidates, department, position]);
+  }, [candidates, department, position, location]);
 
   /* ===== KPI «статус на период» (event-based) ===== */
   const periodCounts = useMemo(() => {
@@ -218,7 +239,7 @@ export default function Dashboard() {
         }}
       >
         {/* Левая группа: селекты */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 320 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 480 }}>
           {/* Отдел */}
           <CompactSelect
             size="small"
@@ -262,6 +283,25 @@ export default function Dashboard() {
             <MenuItem value="all">Все</MenuItem>
             {posOptions.map((p: any) => (
               <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
+            ))}
+          </CompactSelect>
+
+          {/* Локация */}
+          <CompactSelect
+            size="small"
+            value={location}
+            onChange={(e) => setLocation(String(e.target.value))}
+            sx={{
+              width: WIDTH,
+              bgcolor: "#475569",
+              color: "#fff",
+              "& .MuiSvgIcon-root": { color: "#fff" },
+            }}
+            MenuProps={{ PaperProps: { sx: { mt: 0.5 } } }}
+          >
+            <MenuItem value="all">Все локации</MenuItem>
+            {locationOptions.filter((v) => v !== "all").map((v) => (
+              <MenuItem key={v} value={v}>{v}</MenuItem>
             ))}
           </CompactSelect>
         </Box>

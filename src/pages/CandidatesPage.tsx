@@ -76,6 +76,14 @@ export default function CandidatesPage() {
           getRowId={(r) => (r as Candidate)._id}
           loading={isLoading}
           disableRowSelectionOnClick
+
+          // ← добавлено: подсветка "Отказано"
+          getRowClassName={(params) =>
+            ((params?.row?.statusCode ?? (params as any)?.row?.status) === "declined")
+              ? "row--declined"
+              : ""
+          }
+
           processRowUpdate={async (newRow, oldRow) => {
             const n = newRow as Candidate;
             const o = oldRow as Candidate;
@@ -102,6 +110,16 @@ export default function CandidatesPage() {
             }, 
             "& .MuiDataGrid-columnHeaders": {
               borderRadius: { xs: 1, md: 2 },
+            },
+
+            "& .MuiDataGrid-row.row--declined": {
+              backgroundColor: "rgba(239,68,68,0.12)",
+            },
+            "& .MuiDataGrid-row.row--declined:hover": {
+              backgroundColor: "rgba(239,68,68,0.18)",
+            },
+            "& .MuiDataGrid-row.row--declined .MuiDataGrid-cell": {
+              borderColor: "rgba(239,68,68,0.20)",
             },
           }}
         />

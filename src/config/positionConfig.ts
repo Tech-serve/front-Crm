@@ -1,4 +1,11 @@
-export const POSITION_OPTIONS: Record<string, { value: string; label: string }[]> = {
+export const POSITION_OPTIONS = {
+  Gambling: [
+    { value: "Head", label: "Head" },
+    { value: "TeamLead", label: "Team Lead" },
+    { value: "Buyer", label: "Buyer" },
+    { value: "Designer", label: "Designer" },
+    { value: "FarmerTech", label: "Farmer's Tech" }, // ← добавлено сюда
+  ],
   Sweeps: [
     { value: "Head", label: "Head" },
     { value: "TeamLead", label: "Team Lead" },
@@ -11,22 +18,15 @@ export const POSITION_OPTIONS: Record<string, { value: string; label: string }[]
     { value: "Buyer", label: "Buyer" },
     { value: "Designer", label: "Designer" },
   ],
-  Gambling: [
-    { value: "Head", label: "Head" },
-    { value: "TeamLead", label: "Team Lead" },
-    { value: "Buyer", label: "Buyer" },
-    { value: "Designer", label: "Designer" },
-  ],
   Admin: [
     { value: "Accountant", label: "Accountant" },
     { value: "Administrator", label: "Administrator" },
   ],
   Vitehi: [],
   Tech: [
-    { value: "CTO", label: "CTO" },           
-    { value: "Translator", label: "Translator" }, 
+    { value: "CTO", label: "CTO" },
+    { value: "Translator", label: "Translator" },
     { value: "Frontend", label: "Frontend" },
-    { value: "FarmerTech", label: "Farmer Tech" },
-
   ],
+  TechaDeals: [],
 } as const;
